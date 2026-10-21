@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/discovery_service.dart';
 import '../services/p2p_socket_service.dart';
 import '../services/permission_service.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_avatar.dart';
 import '../widgets/glass_container.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -110,7 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Text('Dev Mode', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
               Switch(
                 value: _isDevMode,
-                activeColor: AppTheme.primaryCyan,
+                activeThumbColor: AppTheme.primaryCyan,
                 onChanged: (val) => setState(() => _isDevMode = val),
               ),
             ],
@@ -173,62 +175,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
 
           // Profile Setup Card
-          GlassContainer(
-            borderRadius: 20,
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
+          Builder(
+            builder: (context) {
+              final profile = StorageService.getUserProfile();
+              return GlassContainer(
+                borderRadius: 20,
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.badge_rounded, color: AppTheme.primaryCyan, size: 22),
-                    SizedBox(width: 8),
-                    Text(
-                      'Node Identity',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'This name flashes on radar when nearby phones and PCs discover you:',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _nameController,
-                        style: const TextStyle(color: AppTheme.textPrimary),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppTheme.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppTheme.glassBorder),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            AppAvatar(
+                              avatar: profile?.avatar ?? AppAvatar.defaultAvatars[0].id,
+                              size: 42,
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile?.name ?? widget.discoveryService.myDeviceName,
+                                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  profile?.username ?? '@node',
+                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontFamily: 'monospace'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentGreen.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.accentGreen.withValues(alpha: 0.3)),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppTheme.primaryCyan),
+                          child: const Text('Local Node', style: TextStyle(color: AppTheme.accentGreen, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Broadcast Device Name:',
+                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _nameController,
+                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppTheme.surface,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: AppTheme.glassBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: AppTheme.primaryCyan, width: 1.5),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: _saveDeviceName,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryCyan,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      ),
-                      child: const Text('Save'),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: _saveDeviceName,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryCyan,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
           const SizedBox(height: 16),
@@ -254,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _diagnosticRow('Local Node IP', widget.discoveryService.myIp),
                 _diagnosticRow('TCP Server Port', '${P2PSocketService.tcpPort} (Transfer Pipeline)'),
                 _diagnosticRow('UDP Beacon Port', '${DiscoveryService.udpPort} (Radar Broadcast)'),
-                _diagnosticRow('OS Platform', Platform.operatingSystem.toUpperCase()),
+                _diagnosticRow('OS Platform', kIsWeb ? 'BROWSER (WEB ENGINE)' : Platform.operatingSystem.toUpperCase()),
                 _diagnosticRow('Vault Path', _downloadDir, isMono: false),
               ],
             ),
@@ -263,7 +298,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Selective Android Permissions Manager Card
-          if (Platform.isAndroid)
+          if (!kIsWeb && Platform.isAndroid)
             GlassContainer(
               borderRadius: 20,
               padding: const EdgeInsets.all(18),

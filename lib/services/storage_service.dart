@@ -1,13 +1,45 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_message.dart';
 import '../models/transfer_task.dart';
 
+class UserProfile {
+  final String name;
+  final String username;
+  final String avatar;
+  final String tagline;
+
+  UserProfile({
+    required this.name,
+    required this.username,
+    required this.avatar,
+    required this.tagline,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'username': username,
+        'avatar': avatar,
+        'tagline': tagline,
+      };
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      name: json['name'] as String? ?? 'Piyush',
+      username: json['username'] as String? ?? '@piyush',
+      avatar: json['avatar'] as String? ?? 'assets/avatars/avatar_1.png',
+      tagline: json['tagline'] as String? ?? 'Zero Latency • Ready to Share',
+    );
+  }
+}
+
 class StorageService {
   static const String _keyDeviceId = 'zeroping_device_id';
   static const String _keyDeviceName = 'zeroping_device_name';
+  static const String _keyUserProfile = 'zeroping_user_profile';
   static const String _keyTransfers = 'zeroping_transfers';
   static const String _keyChatPrefix = 'zeroping_chat_';
 
@@ -15,6 +47,30 @@ class StorageService {
 
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
+  }
+
+  // --- USER PROFILE / LOGIN SYSTEM ---
+  static bool isLoggedIn() {
+    return _prefs?.containsKey(_keyUserProfile) ?? false;
+  }
+
+  static UserProfile? getUserProfile() {
+    final str = _prefs?.getString(_keyUserProfile);
+    if (str == null || str.isEmpty) return null;
+    try {
+      return UserProfile.fromJson(jsonDecode(str));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveUserProfile(UserProfile profile) async {
+    await _prefs?.setString(_keyUserProfile, jsonEncode(profile.toJson()));
+    await setDeviceName(profile.name);
+  }
+
+  static Future<void> logout() async {
+    await _prefs?.remove(_keyUserProfile);
   }
 
   static String getDeviceId() {
@@ -30,12 +86,28 @@ class StorageService {
     String? name = _prefs?.getString(_keyDeviceName);
     if (name != null && name.isNotEmpty) return name;
 
-    String defaultName = 'ZeroPing Device';
-    if (Platform.isAndroid) {
-      defaultName = 'Android Peer';
-    } else if (Platform.isWindows) defaultName = 'Windows PC';
-    else if (Platform.isMacOS) defaultName = "Piyush's Mac";
-    else if (Platform.isLinux) defaultName = 'Linux Node';
+    // Check saved user profile first
+    final profile = getUserProfile();
+    if (profile != null && profile.name.isNotEmpty) {
+      return profile.name;
+    }
+
+    String defaultName = 'ZeroPing Node';
+    if (!kIsWeb) {
+      try {
+        if (Platform.isAndroid) {
+          defaultName = 'Android Peer';
+        } else if (Platform.isWindows) {
+          defaultName = 'Windows PC';
+        } else if (Platform.isMacOS) {
+          defaultName = "Piyush's Mac";
+        } else if (Platform.isLinux) {
+          defaultName = 'Linux Node';
+        }
+      } catch (_) {}
+    } else {
+      defaultName = 'Web Peer';
+    }
 
     _prefs?.setString(_keyDeviceName, defaultName);
     return defaultName;
@@ -45,25 +117,34 @@ class StorageService {
     await _prefs?.setString(_keyDeviceName, name);
   }
 
-  /// Get directory where received files should be stored
+  /// Get directory where received files should be stored (Web Safe)
   static Future<Directory> getDownloadsDirectoryPath() async {
-    Directory? dir;
-    if (Platform.isAndroid) {
-      // In Android, try public downloads or app external files
-      final ext = await getExternalStorageDirectory();
-      if (ext != null) {
-        dir = Directory('${ext.path}/ZeroPing');
-      }
-    } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      dir = await getDownloadsDirectory();
+    if (kIsWeb) {
+      return Directory('/zeroping_web_vault');
     }
 
-    dir ??= await getApplicationDocumentsDirectory();
-    final target = Directory('${dir.path}/ZeroPing');
-    if (!await target.exists()) {
-      await target.create(recursive: true);
+    Directory? dir;
+    try {
+      if (Platform.isAndroid) {
+        final ext = await getExternalStorageDirectory();
+        if (ext != null) {
+          dir = Directory('${ext.path}/ZeroPing');
+        }
+      } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+        dir = await getDownloadsDirectory();
+      }
+    } catch (_) {}
+
+    try {
+      dir ??= await getApplicationDocumentsDirectory();
+      final target = Directory('${dir.path}/ZeroPing');
+      if (!await target.exists()) {
+        await target.create(recursive: true);
+      }
+      return target;
+    } catch (_) {
+      return Directory('/tmp/ZeroPing');
     }
-    return target;
   }
 
   /// Save transfer tasks

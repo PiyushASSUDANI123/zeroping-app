@@ -104,7 +104,7 @@ class BrowserDropService extends ChangeNotifier {
       for (final entity in list) {
         if (entity is File) {
           final stat = entity.statSync();
-          final name = entity.path.split(Platform.pathSeparator).last;
+          final name = entity.path.split(RegExp(r'[/\\]')).last;
           filesList.add({
             'name': name,
             'size': stat.size,

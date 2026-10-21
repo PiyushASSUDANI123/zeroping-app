@@ -88,7 +88,7 @@ class _FilesScreenState extends State<FilesScreen> {
         borderRadius: 24,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(20),
-        color: AppTheme.surfaceCard.withOpacity(0.95),
+        color: AppTheme.surfaceCard.withValues(alpha: 0.95),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +199,7 @@ class _FilesScreenState extends State<FilesScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.folder_open_rounded, size: 56, color: AppTheme.textMuted.withOpacity(0.4)),
+                            Icon(Icons.folder_open_rounded, size: 56, color: AppTheme.textMuted.withValues(alpha: 0.4)),
                             const SizedBox(height: 12),
                             Text(
                               'No $_selectedCategory files found in ZeroPing Vault',
@@ -214,7 +214,7 @@ class _FilesScreenState extends State<FilesScreen> {
                         itemBuilder: (context, index) {
                           final file = filtered[index] as File;
                           final stat = file.statSync();
-                          final fileName = file.path.split(Platform.pathSeparator).last;
+                          final fileName = file.path.split(RegExp(r'[/\\]')).last;
 
                           return GlassContainer(
                             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -226,7 +226,7 @@ class _FilesScreenState extends State<FilesScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryCyan.withOpacity(0.12),
+                                    color: AppTheme.primaryCyan.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(_getFileIcon(file.path), color: AppTheme.primaryCyan, size: 24),

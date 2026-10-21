@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'services/bluetooth_p2p_service.dart';
 import 'services/browser_drop_service.dart';
 import 'services/broadcast_engine.dart';
 import 'services/clipboard_service.dart';
 import 'services/discovery_service.dart';
-import 'services/iot_node_service.dart';
 import 'services/p2p_socket_service.dart';
 import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
@@ -14,13 +14,13 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Dark immersive status bar
+  // Clean light theme status and navigation bar
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: AppTheme.surface,
-      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -51,8 +51,6 @@ void main() async {
   };
 
   final broadcastEngine = BroadcastEngine();
-  final iotNodeService = IoTNodeService();
-
   final bluetoothService = BluetoothP2PService();
   await bluetoothService.init();
 
@@ -63,19 +61,17 @@ void main() async {
       browserDropService: browserDropService,
       clipboardService: clipboardService,
       broadcastEngine: broadcastEngine,
-      iotNodeService: iotNodeService,
       bluetoothService: bluetoothService,
     ),
   );
 }
 
-class ZeroPingApp extends StatelessWidget {
+class ZeroPingApp extends StatefulWidget {
   final DiscoveryService discoveryService;
   final P2PSocketService socketService;
   final BrowserDropService browserDropService;
   final ClipboardService clipboardService;
   final BroadcastEngine broadcastEngine;
-  final IoTNodeService iotNodeService;
   final BluetoothP2PService bluetoothService;
 
   const ZeroPingApp({
@@ -85,25 +81,47 @@ class ZeroPingApp extends StatelessWidget {
     required this.browserDropService,
     required this.clipboardService,
     required this.broadcastEngine,
-    required this.iotNodeService,
     required this.bluetoothService,
   });
+
+  @override
+  State<ZeroPingApp> createState() => _ZeroPingAppState();
+}
+
+class _ZeroPingAppState extends State<ZeroPingApp> {
+  late bool _isLoggedIn;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoggedIn = StorageService.isLoggedIn();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ZeroPing',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      home: HomeScreen(
-        discoveryService: discoveryService,
-        socketService: socketService,
-        browserDropService: browserDropService,
-        clipboardService: clipboardService,
-        broadcastEngine: broadcastEngine,
-        iotNodeService: iotNodeService,
-        bluetoothService: bluetoothService,
-      ),
+      theme: AppTheme.lightTheme,
+      home: _isLoggedIn
+          ? HomeScreen(
+              discoveryService: widget.discoveryService,
+              socketService: widget.socketService,
+              browserDropService: widget.browserDropService,
+              clipboardService: widget.clipboardService,
+              broadcastEngine: widget.broadcastEngine,
+              bluetoothService: widget.bluetoothService,
+            )
+          : LoginScreen(
+              onLoginSuccess: () {
+                // Update discovery device name if user changed it in login profile
+                final profile = StorageService.getUserProfile();
+                if (profile != null) {
+                  widget.discoveryService.updateDeviceName(profile.name);
+                }
+                setState(() => _isLoggedIn = true);
+              },
+            ),
     );
   }
 }

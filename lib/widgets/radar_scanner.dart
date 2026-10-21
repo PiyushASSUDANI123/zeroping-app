@@ -88,14 +88,14 @@ class _RadarScannerState extends State<RadarScanner>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: AppTheme.primaryGradient,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryCyan.withOpacity(0.5),
+                          color: AppTheme.primaryCyan.withValues(alpha: 0.35),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
@@ -111,16 +111,19 @@ class _RadarScannerState extends State<RadarScanner>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface.withOpacity(0.8),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primaryCyan.withOpacity(0.4), width: 1),
+                      border: Border.all(color: AppTheme.glassBorder, width: 1),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+                      ],
                     ),
                     child: Text(
                       widget.localDeviceName,
                       style: const TextStyle(
                         color: AppTheme.textPrimary,
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -141,11 +144,10 @@ class _RadarScannerState extends State<RadarScanner>
     final count = widget.peers.length;
     if (count == 0) return nodes;
 
-    // Distribute peers in concentric rings (radii 0.45 to 0.85 of radar)
     for (int i = 0; i < count; i++) {
       final peer = widget.peers[i];
       final angle = (2 * math.pi / count) * i - (math.pi / 2);
-      final dist = (radarRadius * 0.55) + ((i % 3) * (radarRadius * 0.15));
+      final dist = (radarRadius * 0.52) + ((i % 3) * (radarRadius * 0.14));
 
       final x = dist * math.cos(angle);
       final y = dist * math.sin(angle);
@@ -203,16 +205,17 @@ class _PeerNodeWidget extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.surfaceCard,
+              color: Colors.white,
               border: Border.all(
                 color: AppTheme.primaryCyan,
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryCyan.withOpacity(0.4),
-                  blurRadius: 14,
+                  color: AppTheme.primaryCyan.withValues(alpha: 0.2),
+                  blurRadius: 12,
                   spreadRadius: 1,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -226,12 +229,15 @@ class _PeerNodeWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppTheme.surface.withOpacity(0.9),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: AppTheme.glassBorder,
                 width: 1,
               ),
+              boxShadow: const [
+                BoxShadow(color: Color(0x08000000), blurRadius: 6),
+              ],
             ),
             child: Text(
               peer.name,
@@ -262,18 +268,16 @@ class _RadarPainter extends CustomPainter {
     final radius = size.width / 2;
 
     final ringPaint = Paint()
-      ..color = AppTheme.primaryCyan.withOpacity(0.15)
+      ..color = AppTheme.primaryCyan.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    // Draw 3 concentric sonar rings
     canvas.drawCircle(center, radius * 0.35, ringPaint);
     canvas.drawCircle(center, radius * 0.65, ringPaint);
     canvas.drawCircle(center, radius * 0.95, ringPaint);
 
-    // Crosshairs / Axes
     final axisPaint = Paint()
-      ..color = AppTheme.primaryCyan.withOpacity(0.08)
+      ..color = AppTheme.glassBorder
       ..strokeWidth = 1.0;
 
     canvas.drawLine(
@@ -288,7 +292,6 @@ class _RadarPainter extends CustomPainter {
     );
 
     if (isScanning) {
-      // Draw radar sweep beam
       final sweepPaint = Paint()
         ..shader = SweepGradient(
           center: Alignment.center,
@@ -296,16 +299,15 @@ class _RadarPainter extends CustomPainter {
           endAngle: math.pi / 2,
           colors: [
             Colors.transparent,
-            AppTheme.primaryCyan.withOpacity(0.35),
+            AppTheme.primaryCyan.withValues(alpha: 0.15),
           ],
           transform: GradientRotation(sweepAngle - math.pi / 2),
         ).createShader(Rect.fromCircle(center: center, radius: radius * 0.95));
 
       canvas.drawCircle(center, radius * 0.95, sweepPaint);
 
-      // Leading beam line
       final beamLinePaint = Paint()
-        ..color = AppTheme.primaryCyan.withOpacity(0.8)
+        ..color = AppTheme.primaryCyan.withValues(alpha: 0.6)
         ..strokeWidth = 1.5;
 
       final lineX = center.dx + (radius * 0.95) * math.cos(sweepAngle);

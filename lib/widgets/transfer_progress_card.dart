@@ -73,10 +73,10 @@ class TransferProgressCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _getStatusColor(task.status).withOpacity(0.12),
+                  color: _getStatusColor(task.status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _getStatusColor(task.status).withOpacity(0.3),
+                    color: _getStatusColor(task.status).withValues(alpha: 0.25),
                     width: 1,
                   ),
                 ),
@@ -128,10 +128,10 @@ class TransferProgressCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getStatusColor(task.status).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  color: _getStatusColor(task.status).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: _getStatusColor(task.status).withOpacity(0.4),
+                    color: _getStatusColor(task.status).withValues(alpha: 0.25),
                     width: 1,
                   ),
                 ),
@@ -141,7 +141,7 @@ class TransferProgressCard extends StatelessWidget {
                     color: _getStatusColor(task.status),
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
@@ -150,13 +150,13 @@ class TransferProgressCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // Progress Bar with neon glow
+          // Progress Bar with clean sapphire fill
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: task.progress,
               minHeight: 8,
-              backgroundColor: AppTheme.surfaceCard,
+              backgroundColor: const Color(0xFFF1F5F9),
               valueColor: AlwaysStoppedAnimation<Color>(
                 _getStatusColor(task.status),
               ),
@@ -225,7 +225,7 @@ class TransferProgressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     task.isChecksumVerified == true
-                        ? 'SHA-256 Checksum Verified Integrity (Match)'
+                        ? 'SHA-256 Verified Match (Clean Integrity)'
                         : 'SHA-256: ${task.sha256!.substring(0, math.min(16, task.sha256!.length))}...',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -263,7 +263,7 @@ class TransferProgressCard extends StatelessWidget {
                   icon: const Icon(Icons.play_arrow_rounded, size: 16),
                   label: const Text('Resume (Offset)'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryCyan.withOpacity(0.2),
+                    backgroundColor: AppTheme.primaryCyan.withValues(alpha: 0.1),
                     foregroundColor: AppTheme.primaryCyan,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     elevation: 0,
@@ -281,13 +281,12 @@ class TransferProgressCard extends StatelessWidget {
                   icon: const Icon(Icons.file_open_rounded, size: 16),
                   label: const Text('Open File'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentGreen.withOpacity(0.2),
-                    foregroundColor: AppTheme.accentGreen,
+                    backgroundColor: AppTheme.accentGreen,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: AppTheme.accentGreen, width: 1),
                     ),
                   ),
                 ),

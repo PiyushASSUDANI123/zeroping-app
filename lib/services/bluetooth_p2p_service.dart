@@ -98,7 +98,7 @@ class BluetoothP2PService extends ChangeNotifier {
 
   /// Check Android 12+ Bluetooth Permissions
   Future<bool> checkPermissions() async {
-    if (!Platform.isAndroid) return true;
+    if (kIsWeb || !Platform.isAndroid) return true;
 
     final scan = await Permission.bluetoothScan.isGranted;
     final connect = await Permission.bluetoothConnect.isGranted;
@@ -110,7 +110,7 @@ class BluetoothP2PService extends ChangeNotifier {
 
   /// Request all required Android 12+ permissions
   Future<bool> requestPermissions() async {
-    if (!Platform.isAndroid) return true;
+    if (kIsWeb || !Platform.isAndroid) return true;
 
     final statuses = await [
       Permission.bluetoothScan,

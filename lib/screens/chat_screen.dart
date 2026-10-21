@@ -59,9 +59,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendAttachment() async {
-    final picked = await FilePicker.pickFile();
-    if (picked != null && picked.path != null) {
-      final path = picked.path!;
+    final picked = await FilePicker.pickFiles();
+    if (picked.isNotEmpty) {
+      final path = picked.first.path ?? picked.first.name;
       final task = await widget.socketService.offerFile(
           peerIp: widget.peer.ip,
           peerName: widget.peer.name,
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
               height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primaryViolet.withOpacity(0.2),
+                color: AppTheme.primaryViolet.withValues(alpha: 0.2),
                 border: Border.all(color: AppTheme.primaryViolet, width: 1.5),
               ),
               child: const Icon(Icons.person_rounded, color: AppTheme.primaryViolet, size: 20),
@@ -149,7 +149,7 @@ class _ChatScreenState extends State<ChatScreen> {
             // Security / Mode Banner
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              color: AppTheme.surfaceCard.withOpacity(0.6),
+              color: AppTheme.surfaceCard.withValues(alpha: 0.6),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -174,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chat_bubble_outline_rounded, size: 48, color: AppTheme.textMuted.withOpacity(0.4)),
+                          Icon(Icons.chat_bubble_outline_rounded, size: 48, color: AppTheme.textMuted.withValues(alpha: 0.4)),
                           const SizedBox(height: 10),
                           const Text(
                             'Say hi to start local peer chat!',
@@ -263,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.76),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: msg.isMe ? AppTheme.primaryCyan.withOpacity(0.18) : AppTheme.surfaceCard,
+          color: msg.isMe ? AppTheme.primaryCyan.withValues(alpha: 0.18) : AppTheme.surfaceCard,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -271,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
             bottomRight: Radius.circular(msg.isMe ? 4 : 16),
           ),
           border: Border.all(
-            color: msg.isMe ? AppTheme.primaryCyan.withOpacity(0.4) : AppTheme.glassBorder,
+            color: msg.isMe ? AppTheme.primaryCyan.withValues(alpha: 0.4) : AppTheme.glassBorder,
             width: 1,
           ),
         ),
@@ -286,7 +286,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               timeStr,
               style: TextStyle(
-                color: AppTheme.textMuted.withOpacity(0.8),
+                color: AppTheme.textMuted.withValues(alpha: 0.8),
                 fontSize: 9.5,
               ),
             ),

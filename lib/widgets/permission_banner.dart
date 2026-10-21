@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/permission_service.dart';
 import '../theme/app_theme.dart';
@@ -48,15 +49,15 @@ class _PermissionBannerState extends State<PermissionBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isAndroid || _isLoading || (_report != null && _report!.isAllGranted)) {
+    if (kIsWeb || !Platform.isAndroid || _isLoading || (_report != null && _report!.isAllGranted)) {
       return const SizedBox.shrink();
     }
 
     return GlassContainer(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(14),
-      color: AppTheme.accentYellow.withOpacity(0.08),
-      border: Border.all(color: AppTheme.accentYellow.withOpacity(0.4), width: 1),
+      color: AppTheme.accentYellow.withValues(alpha: 0.08),
+      border: Border.all(color: AppTheme.accentYellow.withValues(alpha: 0.4), width: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -112,10 +113,10 @@ class _PermissionBannerState extends State<PermissionBanner> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: granted ? AppTheme.accentGreen.withOpacity(0.15) : AppTheme.accentRose.withOpacity(0.15),
+        color: granted ? AppTheme.accentGreen.withValues(alpha: 0.15) : AppTheme.accentRose.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: granted ? AppTheme.accentGreen.withOpacity(0.4) : AppTheme.accentRose.withOpacity(0.4),
+          color: granted ? AppTheme.accentGreen.withValues(alpha: 0.4) : AppTheme.accentRose.withValues(alpha: 0.4),
           width: 0.8,
         ),
       ),

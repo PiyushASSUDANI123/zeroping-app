@@ -45,10 +45,16 @@ class DiscoveryService extends ChangeNotifier {
   Future<bool> startDiscovery() async {
     if (_isDiscovering) return true;
 
-    try {
-      _myIp = await NetworkUtils.getPrimaryLocalIP();
+    _myIp = await NetworkUtils.getPrimaryLocalIP();
 
-      // Bind UDP Socket
+    if (kIsWeb) {
+      _isDiscovering = true;
+      _peers.clear();
+      notifyListeners();
+      return true;
+    }
+
+    try {
       _socket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
         udpPort,
@@ -64,16 +70,13 @@ class DiscoveryService extends ChangeNotifier {
       _isDiscovering = true;
       notifyListeners();
 
-      // Immediately send first broadcast
       _sendBroadcast();
 
-      // Schedule periodic broadcast every 2 seconds
       _broadcastTimer?.cancel();
       _broadcastTimer = Timer.periodic(const Duration(seconds: 2), (_) {
         _sendBroadcast();
       });
 
-      // Schedule peer timeout cleanup every 3 seconds
       _pruneTimer?.cancel();
       _pruneTimer = Timer.periodic(const Duration(seconds: 3), (_) {
         _pruneStalePeers();
@@ -102,7 +105,6 @@ class DiscoveryService extends ChangeNotifier {
       final peerId = json['id'] as String?;
       final senderIp = datagram.address.address;
 
-      // Ignore our own broadcast
       if (peerId == _myDeviceId) return;
 
       if (type == 'zeroping_announce' || type == 'zeroping_ack') {
@@ -110,10 +112,15 @@ class DiscoveryService extends ChangeNotifier {
         DeviceType devType = DeviceType.unknown;
         if (deviceTypeStr.contains('android')) {
           devType = DeviceType.android;
-        } else if (deviceTypeStr.contains('windows')) devType = DeviceType.windows;
-        else if (deviceTypeStr.contains('macos') || deviceTypeStr.contains('darwin')) devType = DeviceType.macos;
-        else if (deviceTypeStr.contains('linux')) devType = DeviceType.linux;
-        else if (deviceTypeStr.contains('ios')) devType = DeviceType.ios;
+        } else if (deviceTypeStr.contains('windows')) {
+          devType = DeviceType.windows;
+        } else if (deviceTypeStr.contains('macos') || deviceTypeStr.contains('darwin')) {
+          devType = DeviceType.macos;
+        } else if (deviceTypeStr.contains('linux')) {
+          devType = DeviceType.linux;
+        } else if (deviceTypeStr.contains('ios')) {
+          devType = DeviceType.ios;
+        }
 
         final peer = PeerDevice(
           id: peerId ?? senderIp,
@@ -127,26 +134,27 @@ class DiscoveryService extends ChangeNotifier {
         _peers[peer.id] = peer;
         notifyListeners();
 
-        // If it was an announce, send an ACK directly back so discovery is instantaneous
         if (type == 'zeroping_announce') {
           _sendDirectAck(datagram.address, (json['port'] as num?)?.toInt() ?? udpPort);
         }
       }
-    } catch (e) {
-      // Packet format error or non-JSON
-    }
+    } catch (_) {}
   }
 
   void _sendBroadcast() async {
-    if (_socket == null || !_isDiscovering) return;
+    if (kIsWeb || _socket == null || !_isDiscovering) return;
 
     _myIp = await NetworkUtils.getPrimaryLocalIP();
 
     String osType = 'android';
-    if (Platform.isWindows) osType = 'windows';
-    if (Platform.isMacOS) osType = 'macos';
-    if (Platform.isLinux) osType = 'linux';
-    if (Platform.isIOS) osType = 'ios';
+    if (!kIsWeb) {
+      try {
+        if (Platform.isWindows) osType = 'windows';
+        if (Platform.isMacOS) osType = 'macos';
+        if (Platform.isLinux) osType = 'linux';
+        if (Platform.isIOS) osType = 'ios';
+      } catch (_) {}
+    }
 
     final payload = jsonEncode({
       'type': 'zeroping_announce',
@@ -173,12 +181,16 @@ class DiscoveryService extends ChangeNotifier {
   }
 
   void _sendDirectAck(InternetAddress targetAddress, int targetPort) {
-    if (_socket == null) return;
+    if (kIsWeb || _socket == null) return;
 
     String osType = 'android';
-    if (Platform.isWindows) osType = 'windows';
-    if (Platform.isMacOS) osType = 'macos';
-    if (Platform.isLinux) osType = 'linux';
+    if (!kIsWeb) {
+      try {
+        if (Platform.isWindows) osType = 'windows';
+        if (Platform.isMacOS) osType = 'macos';
+        if (Platform.isLinux) osType = 'linux';
+      } catch (_) {}
+    }
 
     final payload = jsonEncode({
       'type': 'zeroping_ack',
@@ -197,6 +209,8 @@ class DiscoveryService extends ChangeNotifier {
   }
 
   void _pruneStalePeers() {
+    if (kIsWeb) return;
+
     final now = DateTime.now();
     bool changed = false;
 
@@ -224,6 +238,40 @@ class DiscoveryService extends ChangeNotifier {
 
     _isDiscovering = false;
     notifyListeners();
+  }
+
+  /// Add or connect to a direct peer by IP (real, zero fake data)
+  void addDirectPeer(String ip, {int port = tcpPort, String? name}) {
+    final cleanIp = ip.trim();
+    if (cleanIp.isEmpty) return;
+
+    final peerId = 'peer_$cleanIp';
+    final peer = PeerDevice(
+      id: peerId,
+      name: name ?? 'Node $cleanIp',
+      ip: cleanIp,
+      port: port,
+      deviceType: DeviceType.unknown,
+      lastSeen: DateTime.now(),
+    );
+
+    _peers[peer.id] = peer;
+    notifyListeners();
+
+    // Send direct announce packet if socket is active
+    if (!kIsWeb && _socket != null) {
+      try {
+        final address = InternetAddress(cleanIp);
+        final payload = jsonEncode({
+          'type': 'zeroping_announce',
+          'id': _myDeviceId,
+          'name': _myDeviceName,
+          'port': tcpPort,
+          'os': 'direct',
+        });
+        _socket?.send(utf8.encode(payload), address, udpPort);
+      } catch (_) {}
+    }
   }
 
   @override

@@ -5,9 +5,10 @@ import '../services/browser_drop_service.dart';
 import '../services/broadcast_engine.dart';
 import '../services/clipboard_service.dart';
 import '../services/discovery_service.dart';
-import '../services/iot_node_service.dart';
 import '../services/p2p_socket_service.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_avatar.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/permission_banner.dart';
 import '../widgets/radar_scanner.dart';
@@ -19,7 +20,6 @@ class RadarScreen extends StatefulWidget {
   final BrowserDropService browserDropService;
   final ClipboardService clipboardService;
   final BroadcastEngine broadcastEngine;
-  final IoTNodeService iotNodeService;
   final VoidCallback onNavigateToTransfers;
 
   const RadarScreen({
@@ -29,7 +29,6 @@ class RadarScreen extends StatefulWidget {
     required this.browserDropService,
     required this.clipboardService,
     required this.broadcastEngine,
-    required this.iotNodeService,
     required this.onNavigateToTransfers,
   });
 
@@ -67,11 +66,106 @@ class _RadarScreenState extends State<RadarScreen> {
     );
   }
 
+  void _showDirectConnectDialog() {
+    final ipController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: AppTheme.glassBorder, width: 1.2),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.add_link_rounded, color: AppTheme.primaryCyan),
+            SizedBox(width: 8),
+            Text(
+              'Direct Connect via IP',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Connect directly to another device running ZeroPing on your local Wi-Fi or hotspot. Zero fake data, pure direct socket.',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: ipController,
+              autofocus: true,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontFamily: 'monospace',
+                fontSize: 14,
+              ),
+              decoration: InputDecoration(
+                hintText: 'e.g. 192.168.1.15',
+                hintStyle: const TextStyle(color: AppTheme.textMuted),
+                filled: true,
+                fillColor: AppTheme.background,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.glassBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.glassBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.primaryCyan, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final ip = ipController.text.trim();
+              if (ip.isNotEmpty) {
+                widget.discoveryService.addDirectPeer(ip);
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppTheme.primaryCyan,
+                    content: Text('Connected to node $ip! Beacon announced.'),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryCyan,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Connect Node'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleBigSend() async {
     try {
-      final picked = await FilePicker.pickFile();
-      if (picked != null && picked.path != null) {
-        final path = picked.path!;
+      final result = await FilePicker.pickFiles();
+      if (result.isNotEmpty) {
+        final file = result.first;
+        final path = file.path ?? file.name;
         final peers = widget.discoveryService.peers;
 
         if (!mounted) return;
@@ -81,19 +175,20 @@ class _RadarScreenState extends State<RadarScreen> {
           return;
         }
 
-        // Show Peer Picker Modal with 1-to-Many Classroom option!
+        // Show Peer Picker Modal with 1-to-Many option
         _showSendTargetPicker(path, peers);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(backgroundColor: AppTheme.accentRose, content: Text('File error: $e')),
+          SnackBar(backgroundColor: AppTheme.accentRose, content: Text('File picker error: $e')),
         );
       }
     }
   }
 
   void _handleBigReceive() {
+    final myIp = widget.discoveryService.myIp;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -101,48 +196,94 @@ class _RadarScreenState extends State<RadarScreen> {
         borderRadius: 24,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(22),
-        color: AppTheme.surfaceCard.withValues(alpha: 0.95),
+        color: AppTheme.surfaceCard.withValues(alpha: 0.98),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(colors: [AppTheme.primaryViolet, AppTheme.primaryCyan]),
-                boxShadow: [
-                  BoxShadow(color: AppTheme.primaryViolet.withValues(alpha: 0.5), blurRadius: 18),
-                ],
+                color: AppTheme.primaryCyan.withValues(alpha: 0.12),
+                border: Border.all(color: AppTheme.primaryCyan, width: 1.5),
               ),
-              child: const Icon(Icons.download_rounded, color: Colors.white, size: 30),
+              child: const Icon(Icons.download_rounded, color: AppTheme.primaryCyan, size: 28),
             ),
             const SizedBox(height: 14),
             const Text(
-              'ZeroPing Receive Mode Active',
-              style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
+              'ZeroPing Receiver Ready',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 6),
-            Text(
-              'Listening on Port ${P2PSocketService.tcpPort} • Subnet ${widget.discoveryService.myIp}',
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontFamily: 'monospace'),
-            ),
-            const SizedBox(height: 16),
             const Text(
-              'Your node is visible to all nearby phones and PCs on this Wi-Fi / Hotspot. Any incoming file will prompt an acceptance popup.',
+              'Listening for incoming TCP chunk streams from nearby ZeroPing nodes.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 18),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryCyan,
-                foregroundColor: Colors.black,
-                minimumSize: const Size.fromHeight(46),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.glassBorder),
               ),
-              child: const Text('Ready & Listening', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Local IP Address', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                  Text(
+                    myIp,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.glassBorder),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('TCP Transfer Port', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                  Text(
+                    '${P2PSocketService.tcpPort} (High-Speed)',
+                    style: TextStyle(
+                      color: AppTheme.accentGreen,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.textPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Got it'),
+              ),
             ),
           ],
         ),
@@ -151,7 +292,7 @@ class _RadarScreenState extends State<RadarScreen> {
   }
 
   void _showSendTargetPicker(String filePath, List<PeerDevice> peers) {
-    final fileName = filePath.split('/').last;
+    final fileName = filePath.split(RegExp(r'[/\\]')).last;
 
     showModalBottomSheet(
       context: context,
@@ -160,7 +301,7 @@ class _RadarScreenState extends State<RadarScreen> {
         borderRadius: 24,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(20),
-        color: AppTheme.surfaceCard.withValues(alpha: 0.95),
+        color: AppTheme.surfaceCard.withValues(alpha: 0.98),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +314,7 @@ class _RadarScreenState extends State<RadarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Choose Destination',
+                        'Select Recipient Node',
                         style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
@@ -185,21 +326,21 @@ class _RadarScreenState extends State<RadarScreen> {
                     ],
                   ),
                 ),
-                // 1-to-Many Classroom Mode Trigger
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _startClassroomBroadcast(filePath, peers);
-                  },
-                  icon: const Icon(Icons.groups_rounded, size: 16),
-                  label: const Text('Broadcast All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryViolet,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                if (peers.length > 1)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _startClassroomBroadcast(filePath, peers);
+                    },
+                    icon: const Icon(Icons.groups_rounded, size: 16),
+                    label: const Text('Broadcast All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryViolet,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -207,11 +348,12 @@ class _RadarScreenState extends State<RadarScreen> {
             ...peers.map((peer) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: AppTheme.primaryCyan.withValues(alpha: 0.2),
+                    backgroundColor: AppTheme.primaryCyan.withValues(alpha: 0.12),
                     child: const Icon(Icons.devices_rounded, color: AppTheme.primaryCyan),
                   ),
                   title: Text(peer.name, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-                  subtitle: Text('${peer.ip} • ${peer.deviceType.name.toUpperCase()}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontFamily: 'monospace')),
+                  subtitle: Text('${peer.ip} • ${peer.deviceType.name.toUpperCase()}',
+                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontFamily: 'monospace')),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.primaryCyan),
                   onTap: () async {
                     Navigator.pop(ctx);
@@ -231,15 +373,18 @@ class _RadarScreenState extends State<RadarScreen> {
     );
   }
 
-  void _startClassroomBroadcast(String filePath, List<PeerDevice> peers) {
-    widget.broadcastEngine.startBroadcast(
+  void _startClassroomBroadcast(String filePath, List<PeerDevice> peers) async {
+    final senderId = StorageService.getDeviceId();
+    final senderName = StorageService.getDeviceName();
+    await widget.broadcastEngine.startBroadcast(
       filePath: filePath,
       targets: peers,
-      senderId: widget.discoveryService.myDeviceId,
-      senderName: widget.discoveryService.myDeviceName,
+      senderId: senderId,
+      senderName: senderName,
       socketService: widget.socketService,
     );
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppTheme.surfaceCard,
@@ -258,17 +403,31 @@ class _RadarScreenState extends State<RadarScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surfaceCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: AppTheme.glassBorder)),
-        title: const Text('No Nearby Peers Detected', style: TextStyle(color: AppTheme.textPrimary)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppTheme.glassBorder),
+        ),
+        title: const Text('No Nearby Peers Detected', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
         content: const Text(
-          'Make sure the receiving device has opened ZeroPing on the same Wi-Fi or Hotspot.',
+          'Make sure the receiving device has opened ZeroPing on the same Wi-Fi, or connect directly using their local IP.',
           style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showDirectConnectDialog();
+            },
+            child: const Text('Connect via IP', style: TextStyle(color: AppTheme.primaryCyan)),
+          ),
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK', style: TextStyle(color: AppTheme.primaryCyan)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryCyan,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -278,9 +437,9 @@ class _RadarScreenState extends State<RadarScreen> {
   Future<void> _pickAndSendFile(PeerDevice peer) async {
     Navigator.pop(context);
     try {
-      final picked = await FilePicker.pickFile();
-      if (picked != null && picked.path != null) {
-        final path = picked.path!;
+      final result = await FilePicker.pickFiles();
+      if (result.isNotEmpty) {
+        final path = result.first.path ?? result.first.name;
         final task = await widget.socketService.offerFile(
           peerIp: peer.ip,
           peerName: peer.name,
@@ -295,107 +454,28 @@ class _RadarScreenState extends State<RadarScreen> {
   }
 
   void _showBrowserDropDialog() {
-    final isRunning = widget.browserDropService.isRunning;
     final myIp = widget.discoveryService.myIp;
 
-    if (!isRunning) {
-      widget.browserDropService.startServer(hostIp: myIp);
-    }
-
     showDialog(
       context: context,
-      builder: (ctx) => AnimatedBuilder(
-        animation: widget.browserDropService,
-        builder: (context, _) => AlertDialog(
-          backgroundColor: AppTheme.surfaceCard,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-            side: const BorderSide(color: AppTheme.primaryCyan, width: 1.2),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.laptop_chromebook_rounded, color: AppTheme.primaryCyan),
-              SizedBox(width: 8),
-              Text('Browser Drop (PC Sync)', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'No app required on your PC/Mac! Just open your browser and type this URL on the same Wi-Fi:',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.primaryCyan),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SelectableText(
-                      widget.browserDropService.webUrl,
-                      style: const TextStyle(
-                        color: AppTheme.primaryCyan,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    const Icon(Icons.open_in_browser_rounded, color: AppTheme.primaryCyan, size: 18),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                '• Drag & drop files from PC directly to Phone\n• Download Phone Vault files to PC\n• Sync clipboard text & OTPs instantly',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11, height: 1.5),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                widget.browserDropService.stopServer();
-                Navigator.pop(ctx);
-              },
-              child: const Text('Stop Server', style: TextStyle(color: AppTheme.accentRose)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryCyan,
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showIoTNodeDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AnimatedBuilder(
-        animation: widget.iotNodeService,
-        builder: (context, _) {
-          final node = widget.iotNodeService.activeNode;
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isRunning = widget.browserDropService.isRunning;
+          final url = widget.browserDropService.webUrl.isNotEmpty
+              ? widget.browserDropService.webUrl
+              : 'http://$myIp:${widget.browserDropService.port}';
 
           return AlertDialog(
-            backgroundColor: AppTheme.surfaceCard,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: AppTheme.accentGreen)),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+              side: const BorderSide(color: AppTheme.glassBorder),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.memory_rounded, color: AppTheme.accentGreen),
+                Icon(Icons.laptop_chromebook_rounded, color: AppTheme.primaryCyan),
                 SizedBox(width: 8),
-                Text('Hardware Local Cloud Box', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+                Text('Browser Drop (PC Sync)', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
               ],
             ),
             content: Column(
@@ -403,48 +483,71 @@ class _RadarScreenState extends State<RadarScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Offline physical ESP32 drive on your router. Drop files or pick files without internet:',
+                  'No app needed on PC! Start the local HTTP server, open the URL in Chrome on your laptop, and drag-and-drop files.',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(height: 14),
-                if (node != null)
+                if (isRunning) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.background,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppTheme.accentGreen.withValues(alpha: 0.4)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.check_circle_rounded, color: AppTheme.accentGreen, size: 14),
-                            const SizedBox(width: 6),
-                            Text(node.name, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Icon(Icons.check_circle_rounded, color: AppTheme.accentGreen, size: 14),
+                            SizedBox(width: 6),
+                            Text('HTTP Server Active', style: TextStyle(color: AppTheme.accentGreen, fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text('IP: ${node.ip} • Free: ${(node.freeSpaceMB / 1024).toStringAsFixed(1)} GB / ${(node.totalSpaceMB / 1024).toStringAsFixed(1)} GB',
-                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontFamily: 'monospace')),
+                        const SizedBox(height: 6),
+                        SelectableText(
+                          url,
+                          style: const TextStyle(
+                            color: AppTheme.primaryCyan,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
                       ],
                     ),
-                  )
-                else
+                  ),
+                ] else ...[
                   ElevatedButton.icon(
-                    onPressed: () => widget.iotNodeService.connectToNode('192.168.1.150', simulate: true),
-                    icon: const Icon(Icons.flash_on_rounded, size: 16),
-                    label: const Text('Connect to Virtual/ESP32 Node'),
+                    onPressed: () async {
+                      await widget.browserDropService.startServer(hostIp: myIp);
+                      setDialogState(() {});
+                    },
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: const Text('Start Web Sync Server'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentGreen.withValues(alpha: 0.2),
-                      foregroundColor: AppTheme.accentGreen,
+                      backgroundColor: AppTheme.primaryCyan,
+                      foregroundColor: Colors.white,
                     ),
                   ),
+                ],
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: AppTheme.textMuted))),
+              if (isRunning)
+                TextButton(
+                  onPressed: () {
+                    widget.browserDropService.stopServer();
+                    setDialogState(() {});
+                  },
+                  child: const Text('Stop Server', style: TextStyle(color: AppTheme.accentRose)),
+                ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.textPrimary, foregroundColor: Colors.white),
+                child: const Text('Done'),
+              ),
             ],
           );
         },
@@ -465,7 +568,7 @@ class _RadarScreenState extends State<RadarScreen> {
             borderRadius: 24,
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(20),
-            color: AppTheme.surfaceCard.withValues(alpha: 0.95),
+            color: AppTheme.surfaceCard.withValues(alpha: 0.98),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,7 +585,7 @@ class _RadarScreenState extends State<RadarScreen> {
                     ),
                     Switch(
                       value: widget.clipboardService.autoSync,
-                      activeColor: AppTheme.primaryCyan,
+                      activeThumbColor: AppTheme.primaryCyan,
                       onChanged: (val) => widget.clipboardService.toggleAutoSync(val),
                     ),
                   ],
@@ -499,7 +602,7 @@ class _RadarScreenState extends State<RadarScreen> {
                   ...items.take(4).map((item) => Container(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(10)),
+                        decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(10)),
                         child: Row(
                           children: [
                             Expanded(child: Text(item.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12))),
@@ -530,71 +633,85 @@ class _RadarScreenState extends State<RadarScreen> {
         final peers = widget.discoveryService.peers;
         final myIp = widget.discoveryService.myIp;
         final myName = widget.discoveryService.myDeviceName;
+        final profile = StorageService.getUserProfile();
 
         return Scaffold(
+          backgroundColor: AppTheme.background,
           body: SafeArea(
             child: Column(
               children: [
                 const PermissionBanner(),
 
-                // Top Minimal Header
+                // Minimalist Premium Top Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Node Profile Info
+                      Row(
                         children: [
-                          Row(
+                          AppAvatar(
+                            avatar: profile?.avatar ?? AppAvatar.defaultAvatars[0].id,
+                            size: 44,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isScanning ? AppTheme.primaryCyan : AppTheme.textMuted,
-                                  boxShadow: isScanning
-                                      ? [BoxShadow(color: AppTheme.primaryCyan.withValues(alpha: 0.8), blurRadius: 6)]
-                                      : null,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    profile?.name ?? myName,
+                                    style: const TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isScanning ? AppTheme.accentGreen : AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'ZEROPING RADAR',
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
+                              const SizedBox(height: 1),
+                              Text(
+                                'IP: $myIp • Port ${P2PSocketService.tcpPort}',
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 11,
+                                  fontFamily: 'monospace',
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'IP: $myIp',
-                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontFamily: 'monospace'),
-                          ),
                         ],
                       ),
-                      // Tool shortcuts: Browser Drop & Clipboard
+
+                      // Tool shortcuts: Direct Connect, Universal Clipboard, Browser Drop
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.content_paste_rounded, color: AppTheme.primaryCyan),
+                            icon: const Icon(Icons.add_link_rounded, color: AppTheme.primaryCyan, size: 22),
+                            tooltip: 'Direct Connect via IP',
+                            onPressed: _showDirectConnectDialog,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.content_paste_rounded, color: AppTheme.textSecondary, size: 20),
                             tooltip: 'Universal Clipboard',
                             onPressed: _showClipboardDrawer,
                           ),
                           IconButton(
-                            icon: const Icon(Icons.laptop_chromebook_rounded, color: AppTheme.primaryCyan),
+                            icon: const Icon(Icons.laptop_chromebook_rounded, color: AppTheme.textSecondary, size: 20),
                             tooltip: 'Browser Drop (PC Sync)',
                             onPressed: _showBrowserDropDialog,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.memory_rounded, color: AppTheme.accentGreen),
-                            tooltip: 'Hardware Cloud Node',
-                            onPressed: _showIoTNodeDialog,
                           ),
                         ],
                       ),
@@ -602,59 +719,186 @@ class _RadarScreenState extends State<RadarScreen> {
                   ),
                 ),
 
-                // Centerpiece: Radar Scanner
+                const Divider(height: 1, color: AppTheme.glassBorder),
+
+                // Centerpiece: Minimalist Radar Scanner
                 Expanded(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: RadarScanner(
                         peers: peers,
                         isScanning: isScanning,
-                        localDeviceName: myName,
+                        localDeviceName: profile?.name ?? myName,
                         onPeerTap: _onPeerTapped,
                       ),
                     ),
                   ),
                 ),
 
-                // THE CORE FOCUS: Giant Send & Receive Action Buttons
+                // Peers status / Empty network prompt
+                if (peers.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.glassBorder),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x06000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryCyan.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.radar_rounded, color: AppTheme.primaryCyan, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Scanning local Wi-Fi subnet...',
+                                  style: TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Open ZeroPing on any peer to pair, or connect directly via IP.',
+                                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _showDirectConnectDialog,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.primaryCyan,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            ),
+                            child: const Text('+ Enter IP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  // Horizontal discovered peer list
+                  SizedBox(
+                    height: 72,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: peers.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final peer = peers[index];
+                        return GestureDetector(
+                          onTap: () => _onPeerTapped(peer),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.primaryCyan.withValues(alpha: 0.3)),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x06000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: AppTheme.primaryCyan.withValues(alpha: 0.12),
+                                  child: const Icon(Icons.devices_rounded, color: AppTheme.primaryCyan, size: 18),
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      peer.name,
+                                      style: const TextStyle(
+                                        color: AppTheme.textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${peer.ip} • < 1ms',
+                                      style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 10,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.textMuted),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                // Minimalist Premium Action Buttons: SEND & RECEIVE
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
                   child: Row(
                     children: [
-                      // Big SEND Button
+                      // Premium Dark Slate SEND Button
                       Expanded(
                         child: GestureDetector(
                           onTap: _handleBigSend,
                           child: Container(
-                            height: 62,
+                            height: 56,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF00F0FF), Color(0xFF00A8FF)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
+                              color: AppTheme.textPrimary,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: AppTheme.primaryCyan.withValues(alpha: 0.4),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 6),
+                                  color: Color(0x1A0F172A),
+                                  blurRadius: 14,
+                                  offset: Offset(0, 4),
                                 ),
                               ],
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.arrow_upward_rounded, color: Colors.black, size: 24),
+                                Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
                                 SizedBox(width: 8),
                                 Text(
-                                  'SEND',
+                                  'SEND FILES',
                                   style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.0,
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
@@ -662,40 +906,39 @@ class _RadarScreenState extends State<RadarScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      // Big RECEIVE Button
+
+                      const SizedBox(width: 12),
+
+                      // Premium Porcelain RECEIVE Button
                       Expanded(
                         child: GestureDetector(
                           onTap: _handleBigReceive,
                           child: Container(
-                            height: 62,
+                            height: 56,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF9D4EDD), Color(0xFF7000FF)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.glassBorder, width: 1.2),
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: AppTheme.primaryViolet.withValues(alpha: 0.4),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 6),
+                                  color: Color(0x08000000),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.arrow_downward_rounded, color: Colors.white, size: 24),
+                                Icon(Icons.arrow_downward_rounded, color: AppTheme.primaryCyan, size: 20),
                                 SizedBox(width: 8),
                                 Text(
-                                  'RECEIVE',
+                                  'RECEIVE READY',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.0,
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
@@ -732,7 +975,7 @@ class _PeerActionSheet extends StatelessWidget {
       borderRadius: 24,
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
-      color: AppTheme.surfaceCard.withValues(alpha: 0.95),
+      color: AppTheme.surfaceCard.withValues(alpha: 0.98),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,7 +987,7 @@ class _PeerActionSheet extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                  color: AppTheme.primaryCyan.withValues(alpha: 0.12),
                   border: Border.all(color: AppTheme.primaryCyan, width: 1.5),
                 ),
                 child: const Icon(Icons.devices_rounded, color: AppTheme.primaryCyan, size: 24),
@@ -786,7 +1029,7 @@ class _PeerActionSheet extends StatelessWidget {
                   label: const Text('Send File / Media'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryCyan,
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
@@ -799,8 +1042,9 @@ class _PeerActionSheet extends StatelessWidget {
                   icon: const Icon(Icons.forum_rounded, size: 18),
                   label: const Text('Walkie-Talkie'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryViolet,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.surfaceCard,
+                    foregroundColor: AppTheme.textPrimary,
+                    side: const BorderSide(color: AppTheme.glassBorder),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),

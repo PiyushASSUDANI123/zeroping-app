@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_ping/models/file_metadata.dart';
 import 'package:zero_ping/models/peer_device.dart';
 import 'package:zero_ping/models/transfer_task.dart';
+import 'package:zero_ping/services/discovery_service.dart';
+import 'package:zero_ping/services/storage_service.dart';
+import 'package:zero_ping/widgets/app_avatar.dart';
 
 void main() {
   test('PeerDevice serialization test', () {
@@ -53,5 +56,40 @@ void main() {
     final restored = FileMetadata.fromJson(json);
     expect(restored.fileName, 'archive.zip');
     expect(restored.chunkSize, 512 * 1024);
+  });
+
+  test('UserProfile serialization and 3D avatar test', () {
+    final profile = UserProfile(
+      name: 'Piyush',
+      username: '@piyush',
+      avatar: 'assets/avatars/avatar_1.png',
+      tagline: 'Zero Latency • Ready to Share',
+    );
+
+    final map = profile.toJson();
+    final restored = UserProfile.fromJson(map);
+
+    expect(restored.name, 'Piyush');
+    expect(restored.username, '@piyush');
+    expect(restored.avatar, 'assets/avatars/avatar_1.png');
+    expect(restored.tagline, 'Zero Latency • Ready to Share');
+  });
+
+  test('AppAvatar default avatars catalog test', () {
+    expect(AppAvatar.defaultAvatars.length, 6);
+    expect(AppAvatar.defaultAvatars[0].id, 'assets/avatars/avatar_1.png');
+    expect(AppAvatar.defaultAvatars[0].label, 'Developer');
+    expect(AppAvatar.defaultAvatars[1].label, 'Creator');
+    expect(AppAvatar.defaultAvatars[2].label, 'Cosmonaut');
+  });
+
+  test('DiscoveryService addDirectPeer test (Zero Fake Data)', () {
+    final discovery = DiscoveryService();
+    expect(discovery.peers.isEmpty, isTrue);
+
+    discovery.addDirectPeer('192.168.1.55', name: 'MacBook Pro');
+    expect(discovery.peers.length, 1);
+    expect(discovery.peers.first.ip, '192.168.1.55');
+    expect(discovery.peers.first.name, 'MacBook Pro');
   });
 }

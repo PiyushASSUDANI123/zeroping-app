@@ -73,7 +73,7 @@ class BroadcastEngine extends ChangeNotifier {
     if (!await file.exists() || targets.isEmpty) return;
 
     final totalSize = await file.length();
-    final fileName = filePath.split(Platform.pathSeparator).last;
+    final fileName = filePath.split(RegExp(r'[/\\]')).last;
     final broadcastId = 'bc_${DateTime.now().millisecondsSinceEpoch}';
 
     final sha256Checksum = await TransferEngine.calculateSha256(filePath);
@@ -91,6 +91,12 @@ class BroadcastEngine extends ChangeNotifier {
     _currentSession = session;
     session.isBroadcasting = true;
     notifyListeners();
+
+    if (kIsWeb) {
+      session.isBroadcasting = false;
+      notifyListeners();
+      return;
+    }
 
     // Connect to all peers simultaneously
     final Map<String, Socket> targetSockets = {};

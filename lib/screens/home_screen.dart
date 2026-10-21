@@ -5,7 +5,6 @@ import '../services/broadcast_engine.dart';
 import '../services/browser_drop_service.dart';
 import '../services/clipboard_service.dart';
 import '../services/discovery_service.dart';
-import '../services/iot_node_service.dart';
 import '../services/p2p_socket_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
@@ -21,7 +20,6 @@ class HomeScreen extends StatefulWidget {
   final BrowserDropService browserDropService;
   final ClipboardService clipboardService;
   final BroadcastEngine broadcastEngine;
-  final IoTNodeService iotNodeService;
   final BluetoothP2PService bluetoothService;
 
   const HomeScreen({
@@ -31,7 +29,6 @@ class HomeScreen extends StatefulWidget {
     required this.browserDropService,
     required this.clipboardService,
     required this.broadcastEngine,
-    required this.iotNodeService,
     required this.bluetoothService,
   });
 
@@ -125,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryCyan,
-              foregroundColor: Colors.black,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Accept & Stream Chunks'),
@@ -153,7 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
         browserDropService: widget.browserDropService,
         clipboardService: widget.clipboardService,
         broadcastEngine: widget.broadcastEngine,
-        iotNodeService: widget.iotNodeService,
         onNavigateToTransfers: () => setState(() => _currentIndex = 1),
       ),
       TransfersScreen(

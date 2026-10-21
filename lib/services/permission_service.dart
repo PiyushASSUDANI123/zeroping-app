@@ -19,8 +19,8 @@ class PermissionStatusReport {
 
 class PermissionService {
   static Future<PermissionStatusReport> checkPermissions() async {
-    if (!Platform.isAndroid) {
-      // On Desktop/iOS these specific Android 12+ restrictions don't apply directly
+    if (kIsWeb || !Platform.isAndroid) {
+      // On Web/Desktop/iOS these specific Android 12+ restrictions don't apply directly
       return PermissionStatusReport(
         nearbyWifi: true,
         bluetooth: true,
@@ -70,7 +70,7 @@ class PermissionService {
 
   /// Request all critical permissions with robust sequential handling
   static Future<PermissionStatusReport> requestAllPermissions() async {
-    if (!Platform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       return PermissionStatusReport(
         nearbyWifi: true,
         bluetooth: true,
