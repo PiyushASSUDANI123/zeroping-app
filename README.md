@@ -50,6 +50,10 @@
 
 ## 🚀 Key Highlights & Features
 
+- **🧮 "Stealth Mode" (The Panic Gesture)**: Double-tap the app bar or tap the stealth icon to instantly mask the app behind a fully working, realistic fake Calculator. Bluetooth streams and sockets stay alive in the background. Long-press `=` or double-tap display to return.
+- **🎮 In-Chat Zero-Latency Mini Games**: Play offline Tic-Tac-Toe directly inside the chat window. Game board matrices are streamed live over RFCOMM with sub-millisecond local response.
+- **👻 "Ghost Messages" (Self-Destructing Text)**: Snapchat-style disappearing messages (5s, 10s, 30s). Receiver taps and holds to reveal; when the countdown hits zero, messages permanently burn and vanish from memory and local vault.
+- **🖼️ 10KB Image & Meme Chunking Protocol**: Transfer images and memes across low-bandwidth Bluetooth without crashing connections by slicing payloads into 10KB sequential packets with real-time progress assembly.
 - **📻 Walkie-Talkie Push-To-Talk (Voice Notes over RFCOMM)**: Hold the military mic button to record voice notes. Audio is encrypted with AES-256 and streamed in real-time over the Bluetooth RFCOMM pipe with in-app waveform playback.
 - **🔄 Invisible Auto-Reconnect (The Stability Moat)**: If Bluetooth drops due to range, ZeroPing's background ping daemon silently attempts reconnection to the MAC address and restores the room with haptic feedback as soon as you step back in range.
 - **✓✓ Packet Acknowledgment & Realtime Typing**: WhatsApp-grade UX with dynamic `"Typing..."` indicators and read receipts that turn from single tick `✓` to double grey `✓✓`, and flip to bright blue `✓✓` upon receipt.

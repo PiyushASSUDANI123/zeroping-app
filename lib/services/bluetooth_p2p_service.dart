@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -58,14 +59,34 @@ class BluetoothPeerInfo {
 
 class BluetoothChatMessage {
   final String id;
-  final String text;
+  String text;
   final String rawCipher; // Actual AES-256 encrypted payload sent over wire
   final bool isMe;
   final DateTime timestamp;
   BtMessageStatus status;
+  
+  // Voice note
   final bool isVoiceNote;
   final int voiceNoteDurationSec;
   final Uint8List? voiceNoteBytes;
+
+  // Feature 4: Ghost Self-Destructing Message
+  final bool isGhost;
+  final int ghostDurationSec;
+  bool isGhostRevealed;
+  bool isGhostBurned;
+
+  // Feature 5: Image / Meme Chunking
+  final bool isImage;
+  Uint8List? imageBytes;
+  double imageProgress; // 0.0 to 1.0
+  final int totalChunks;
+
+  // Feature 3: In-Chat Zero-Latency Mini Games (Tic-Tac-Toe)
+  final bool isGame;
+  List<int> gameState; // 9 elements: 0=empty, 1=X, 2=O
+  String gameTurn; // 'X' or 'O'
+  String? gameWinner; // 'X', 'O', 'Draw', or null
 
   BluetoothChatMessage({
     required this.id,
@@ -77,7 +98,20 @@ class BluetoothChatMessage {
     this.isVoiceNote = false,
     this.voiceNoteDurationSec = 0,
     this.voiceNoteBytes,
-  }) : timestamp = timestamp ?? DateTime.now();
+    this.isGhost = false,
+    this.ghostDurationSec = 0,
+    this.isGhostRevealed = false,
+    this.isGhostBurned = false,
+    this.isImage = false,
+    this.imageBytes,
+    this.imageProgress = 1.0,
+    this.totalChunks = 1,
+    this.isGame = false,
+    List<int>? gameState,
+    this.gameTurn = 'X',
+    this.gameWinner,
+  })  : timestamp = timestamp ?? DateTime.now(),
+        gameState = gameState ?? List.filled(9, 0);
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -89,6 +123,18 @@ class BluetoothChatMessage {
     'isVoiceNote': isVoiceNote,
     'voiceNoteDurationSec': voiceNoteDurationSec,
     'voiceNoteBytes': voiceNoteBytes != null ? base64Encode(voiceNoteBytes!) : null,
+    'isGhost': isGhost,
+    'ghostDurationSec': ghostDurationSec,
+    'isGhostRevealed': isGhostRevealed,
+    'isGhostBurned': isGhostBurned,
+    'isImage': isImage,
+    'imageBytes': imageBytes != null ? base64Encode(imageBytes!) : null,
+    'imageProgress': imageProgress,
+    'totalChunks': totalChunks,
+    'isGame': isGame,
+    'gameState': gameState,
+    'gameTurn': gameTurn,
+    'gameWinner': gameWinner,
   };
 
   factory BluetoothChatMessage.fromJson(Map<String, dynamic> json) => BluetoothChatMessage(
@@ -106,6 +152,20 @@ class BluetoothChatMessage {
     voiceNoteBytes: json['voiceNoteBytes'] != null
         ? base64Decode(json['voiceNoteBytes'] as String)
         : null,
+    isGhost: json['isGhost'] as bool? ?? false,
+    ghostDurationSec: (json['ghostDurationSec'] as num?)?.toInt() ?? 0,
+    isGhostRevealed: json['isGhostRevealed'] as bool? ?? false,
+    isGhostBurned: json['isGhostBurned'] as bool? ?? false,
+    isImage: json['isImage'] as bool? ?? false,
+    imageBytes: json['imageBytes'] != null
+        ? base64Decode(json['imageBytes'] as String)
+        : null,
+    imageProgress: (json['imageProgress'] as num?)?.toDouble() ?? 1.0,
+    totalChunks: (json['totalChunks'] as num?)?.toInt() ?? 1,
+    isGame: json['isGame'] as bool? ?? false,
+    gameState: (json['gameState'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? List.filled(9, 0),
+    gameTurn: json['gameTurn'] as String? ?? 'X',
+    gameWinner: json['gameWinner'] as String?,
   );
 }
 
@@ -129,6 +189,10 @@ class BluetoothP2PService extends ChangeNotifier {
   bool _isPeerTyping = false;
   bool get isPeerTyping => _isPeerTyping;
   Timer? _typingDebounceTimer;
+
+  // Image chunk assembling state: transferId -> Map<chunkIndex, chunkBytes>
+  final Map<String, Map<int, Uint8List>> _incomingImageChunks = {};
+  final Map<String, int> _incomingImageTotalChunks = {};
 
   final List<BluetoothPeerInfo> _discoveredDevices = [];
   List<BluetoothPeerInfo> get discoveredDevices => List.unmodifiable(_discoveredDevices);
@@ -210,8 +274,134 @@ class BluetoothP2PService extends ChangeNotifier {
           _saveChatHistory();
           notifyListeners();
 
-          // Automatically send back read receipt (blue tick ACK)
           _sendProtocolPacket({'type': 'ack_read', 'msgId': msgId});
+          break;
+
+        case 'ghost_msg':
+          final msgId = payload['id'] as String? ?? 'bt_ghost_${DateTime.now().millisecondsSinceEpoch}';
+          final cipherText = payload['cipher'] as String? ?? '';
+          final durationSec = (payload['duration'] as num?)?.toInt() ?? 10;
+          final decryptedText = EncryptionService.decryptText(cipherText);
+
+          final ghostMsg = BluetoothChatMessage(
+            id: msgId,
+            text: decryptedText,
+            rawCipher: cipherText,
+            isMe: false,
+            isGhost: true,
+            ghostDurationSec: durationSec,
+            status: BtMessageStatus.read,
+          );
+          _messages.add(ghostMsg);
+          _messageStreamController.add(ghostMsg);
+          notifyListeners();
+
+          _sendProtocolPacket({'type': 'ack_read', 'msgId': msgId});
+          break;
+
+        case 'ghost_burned':
+          final msgId = payload['msgId'] as String? ?? '';
+          _burnGhostMessageLocally(msgId);
+          break;
+
+        case 'game_move':
+          final msgId = payload['id'] as String? ?? 'game_tictactoe';
+          final board = (payload['board'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? List.filled(9, 0);
+          final turn = payload['turn'] as String? ?? 'X';
+          final winner = payload['winner'] as String?;
+
+          // Check if an existing game message exists in chat
+          BluetoothChatMessage? existingGame;
+          for (final m in _messages.reversed) {
+            if (m.isGame && m.id == msgId) {
+              existingGame = m;
+              break;
+            }
+          }
+
+          if (existingGame != null) {
+            existingGame.gameState = board;
+            existingGame.gameTurn = turn;
+            existingGame.gameWinner = winner;
+            existingGame.text = winner != null
+                ? (winner == 'Draw' ? '🤝 Game Draw!' : '🏆 $winner won the match!')
+                : 'Turn: $turn';
+          } else {
+            final gameMsg = BluetoothChatMessage(
+              id: msgId,
+              text: '🎮 Tic-Tac-Toe Peer Game',
+              isMe: false,
+              isGame: true,
+              gameState: board,
+              gameTurn: turn,
+              gameWinner: winner,
+              status: BtMessageStatus.read,
+            );
+            _messages.add(gameMsg);
+            _messageStreamController.add(gameMsg);
+          }
+          _saveChatHistory();
+          notifyListeners();
+          break;
+
+        case 'img_chunk':
+          final transferId = payload['transferId'] as String;
+          final chunkIndex = (payload['chunkIndex'] as num).toInt();
+          final totalChunks = (payload['totalChunks'] as num).toInt();
+          final base64Chunk = payload['data'] as String;
+          final chunkBytes = base64Decode(base64Chunk);
+
+          _incomingImageChunks.putIfAbsent(transferId, () => {})[chunkIndex] = chunkBytes;
+          _incomingImageTotalChunks[transferId] = totalChunks;
+
+          // Find or create image message placeholder in chat
+          BluetoothChatMessage? imgMsg;
+          for (final m in _messages) {
+            if (m.id == transferId) {
+              imgMsg = m;
+              break;
+            }
+          }
+
+          final receivedCount = _incomingImageChunks[transferId]!.length;
+          final progress = receivedCount / totalChunks;
+
+          if (imgMsg == null) {
+            imgMsg = BluetoothChatMessage(
+              id: transferId,
+              text: 'Receiving Meme ($receivedCount/$totalChunks chunks)...',
+              isMe: false,
+              isImage: true,
+              imageProgress: progress,
+              totalChunks: totalChunks,
+              status: BtMessageStatus.delivered,
+            );
+            _messages.add(imgMsg);
+            _messageStreamController.add(imgMsg);
+          } else {
+            imgMsg.imageProgress = progress;
+            imgMsg.text = 'Receiving Meme ($receivedCount/$totalChunks chunks)...';
+          }
+
+          // If all chunks received, assemble the image!
+          if (receivedCount == totalChunks) {
+            final builder = BytesBuilder(copy: false);
+            for (int i = 0; i < totalChunks; i++) {
+              final c = _incomingImageChunks[transferId]![i];
+              if (c != null) builder.add(c);
+            }
+            imgMsg.imageBytes = builder.toBytes();
+            imgMsg.imageProgress = 1.0;
+            imgMsg.text = '🖼️ Offline Meme / Photo';
+            imgMsg.status = BtMessageStatus.read;
+
+            _incomingImageChunks.remove(transferId);
+            _incomingImageTotalChunks.remove(transferId);
+            _saveChatHistory();
+
+            _sendProtocolPacket({'type': 'ack_read', 'msgId': transferId});
+          }
+          notifyListeners();
           break;
 
         case 'audio_note':
@@ -235,7 +425,6 @@ class BluetoothP2PService extends ChangeNotifier {
           _saveChatHistory();
           notifyListeners();
 
-          // Send read receipt
           _sendProtocolPacket({'type': 'ack_read', 'msgId': msgId});
           break;
       }
@@ -254,6 +443,18 @@ class BluetoothP2PService extends ChangeNotifier {
     }
   }
 
+  void _burnGhostMessageLocally(String msgId) {
+    _messages.removeWhere((m) => m.id == msgId);
+    _saveChatHistory();
+    notifyListeners();
+  }
+
+  /// Burn a Ghost message after its countdown finishes
+  void burnGhostMessage(String msgId) {
+    _burnGhostMessageLocally(msgId);
+    _sendProtocolPacket({'type': 'ghost_burned', 'msgId': msgId});
+  }
+
   /// Check Android 12+ Bluetooth Permissions
   Future<bool> checkPermissions() async {
     if (kIsWeb || !Platform.isAndroid) return true;
@@ -266,7 +467,6 @@ class BluetoothP2PService extends ChangeNotifier {
     return scan && connect && advertise && location;
   }
 
-  /// Request all required Android 12+ permissions
   Future<bool> requestPermissions() async {
     if (kIsWeb || !Platform.isAndroid) return true;
 
@@ -287,7 +487,6 @@ class BluetoothP2PService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Step 1: Host a Chat (Server Mode)
   Future<void> hostChat() async {
     final hasPerm = await checkPermissions();
     if (!hasPerm) {
@@ -300,7 +499,6 @@ class BluetoothP2PService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Step 2: Join a Chat (Client Mode)
   Future<void> startDiscovery() async {
     final hasPerm = await checkPermissions();
     if (!hasPerm) {
@@ -344,7 +542,6 @@ class BluetoothP2PService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Connect to a specific Bluetooth MAC Address with custom UUID
   Future<bool> connectToDevice(BluetoothPeerInfo peer) async {
     _state = BluetoothP2PState.connecting;
     _connectedDeviceName = peer.name;
@@ -362,7 +559,6 @@ class BluetoothP2PService extends ChangeNotifier {
     return true;
   }
 
-  /// Accept incoming client connection
   void simulateIncomingGuest({required String guestName, required String guestMac}) {
     final peer = BluetoothPeerInfo(name: guestName, address: guestMac, isPaired: true);
     _connectedDeviceName = guestName;
@@ -374,19 +570,16 @@ class BluetoothP2PService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Step 3: Sending Text - AES-256 Encrypt & Push into RFCOMM Pipe
+  /// Send Regular AES-256 Message
   Future<bool> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || _state != BluetoothP2PState.connected) return false;
 
-    // Stop typing indicator
     sendTypingStatus(false);
 
     final msgId = 'bt_${DateTime.now().millisecondsSinceEpoch}';
-    // 1. Military-Grade AES-256 Encryption
     final cipherText = EncryptionService.encryptText(trimmed);
 
-    // 2. Add to local chat history with Single Tick (sent)
     final myMsg = BluetoothChatMessage(
       id: msgId,
       text: trimmed,
@@ -399,7 +592,6 @@ class BluetoothP2PService extends ChangeNotifier {
     _saveChatHistory();
     notifyListeners();
 
-    // 3. Push Encrypted Packet over RFCOMM pipe
     _sendProtocolPacket({
       'type': 'msg',
       'id': msgId,
@@ -407,7 +599,6 @@ class BluetoothP2PService extends ChangeNotifier {
       'timestamp': DateTime.now().toIso8601String(),
     });
 
-    // Simulate auto-delivery acknowledgement after 400ms for responsiveness
     Future.delayed(const Duration(milliseconds: 400), () {
       _updateMessageStatus(msgId, BtMessageStatus.delivered);
     });
@@ -415,16 +606,163 @@ class BluetoothP2PService extends ChangeNotifier {
     return true;
   }
 
-  /// Step 4: Walkie-Talkie Voice Note Streaming over RFCOMM
+  /// Feature 4: Send Ghost Self-Destructing Message
+  Future<bool> sendGhostMessage(String text, int durationSec) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || _state != BluetoothP2PState.connected) return false;
+
+    sendTypingStatus(false);
+
+    final msgId = 'bt_ghost_${DateTime.now().millisecondsSinceEpoch}';
+    final cipherText = EncryptionService.encryptText(trimmed);
+
+    final ghostMsg = BluetoothChatMessage(
+      id: msgId,
+      text: trimmed,
+      rawCipher: cipherText,
+      isMe: true,
+      isGhost: true,
+      ghostDurationSec: durationSec,
+      status: BtMessageStatus.sent,
+    );
+    _messages.add(ghostMsg);
+    _messageStreamController.add(ghostMsg);
+    notifyListeners();
+
+    _sendProtocolPacket({
+      'type': 'ghost_msg',
+      'id': msgId,
+      'cipher': cipherText,
+      'duration': durationSec,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _updateMessageStatus(msgId, BtMessageStatus.delivered);
+    });
+
+    return true;
+  }
+
+  /// Feature 3: Send In-Chat Tic-Tac-Toe Game Move
+  Future<bool> sendGameMove({
+    required String gameId,
+    required List<int> board,
+    required String turn,
+    String? winner,
+  }) async {
+    if (_state != BluetoothP2PState.connected) return false;
+
+    BluetoothChatMessage? existingGame;
+    for (final m in _messages.reversed) {
+      if (m.isGame && m.id == gameId) {
+        existingGame = m;
+        break;
+      }
+    }
+
+    if (existingGame != null) {
+      existingGame.gameState = board;
+      existingGame.gameTurn = turn;
+      existingGame.gameWinner = winner;
+      existingGame.text = winner != null
+          ? (winner == 'Draw' ? '🤝 Game Draw!' : '🏆 $winner won the match!')
+          : 'Turn: $turn';
+    } else {
+      final gameMsg = BluetoothChatMessage(
+        id: gameId,
+        text: '🎮 Tic-Tac-Toe Peer Game',
+        isMe: true,
+        isGame: true,
+        gameState: board,
+        gameTurn: turn,
+        gameWinner: winner,
+        status: BtMessageStatus.sent,
+      );
+      _messages.add(gameMsg);
+      _messageStreamController.add(gameMsg);
+    }
+    _saveChatHistory();
+    notifyListeners();
+
+    _sendProtocolPacket({
+      'type': 'game_move',
+      'id': gameId,
+      'board': board,
+      'turn': turn,
+      'winner': winner,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
+    return true;
+  }
+
+  /// Feature 5: Image/Meme Chunking (Splits image into 10KB sequential packets)
+  Future<bool> sendImageInChunks({
+    required Uint8List imageBytes,
+    Function(double progress)? onProgress,
+  }) async {
+    if (_state != BluetoothP2PState.connected || imageBytes.isEmpty) return false;
+
+    final transferId = 'img_${DateTime.now().millisecondsSinceEpoch}';
+    const chunkSize = 10 * 1024; // 10KB chunks
+    final totalChunks = (imageBytes.length / chunkSize).ceil();
+
+    final myImgMsg = BluetoothChatMessage(
+      id: transferId,
+      text: '🖼️ Sending Meme (0/$totalChunks chunks)...',
+      isMe: true,
+      isImage: true,
+      imageBytes: imageBytes,
+      imageProgress: 0.0,
+      totalChunks: totalChunks,
+      status: BtMessageStatus.sending,
+    );
+    _messages.add(myImgMsg);
+    _messageStreamController.add(myImgMsg);
+    notifyListeners();
+
+    // Stream 10KB sequential chunks
+    for (int i = 0; i < totalChunks; i++) {
+      final start = i * chunkSize;
+      final end = (start + chunkSize < imageBytes.length) ? start + chunkSize : imageBytes.length;
+      final chunkBytes = imageBytes.sublist(start, end);
+      final base64Chunk = base64Encode(chunkBytes);
+
+      _sendProtocolPacket({
+        'type': 'img_chunk',
+        'transferId': transferId,
+        'chunkIndex': i,
+        'totalChunks': totalChunks,
+        'data': base64Chunk,
+      });
+
+      final progress = (i + 1) / totalChunks;
+      myImgMsg.imageProgress = progress;
+      myImgMsg.text = progress == 1.0
+          ? '🖼️ Offline Meme / Photo'
+          : 'Streaming Meme (${i + 1}/$totalChunks chunks)...';
+      onProgress?.call(progress);
+      notifyListeners();
+
+      // Yield for RFCOMM pipe flow control
+      await Future.delayed(const Duration(milliseconds: 35));
+    }
+
+    myImgMsg.status = BtMessageStatus.sent;
+    _saveChatHistory();
+    notifyListeners();
+    return true;
+  }
+
+  /// Walkie-Talkie Voice Note Streaming over RFCOMM
   Future<bool> sendVoiceNote({required Uint8List audioBytes, required int durationSec}) async {
     if (_state != BluetoothP2PState.connected || audioBytes.isEmpty) return false;
 
     final msgId = 'bt_voice_${DateTime.now().millisecondsSinceEpoch}';
-    // 1. Encrypt voice note binary bytes with AES-256
     final cipherBytes = EncryptionService.encryptBytes(audioBytes);
     final cipherBase64 = base64Encode(cipherBytes);
 
-    // 2. Add to chat history
     final myVoiceMsg = BluetoothChatMessage(
       id: msgId,
       text: '🎙️ Voice Note ($durationSec sec)',
@@ -440,7 +778,6 @@ class BluetoothP2PService extends ChangeNotifier {
     _saveChatHistory();
     notifyListeners();
 
-    // 3. Push Voice Note packet over RFCOMM
     _sendProtocolPacket({
       'type': 'audio_note',
       'id': msgId,
@@ -456,7 +793,6 @@ class BluetoothP2PService extends ChangeNotifier {
     return true;
   }
 
-  /// Send Typing / Stop Typing Indicator
   void sendTypingStatus(bool isTyping) {
     if (_state != BluetoothP2PState.connected) return;
     _sendProtocolPacket({'type': isTyping ? 'typing' : 'stop_typing'});
@@ -468,24 +804,19 @@ class BluetoothP2PService extends ChangeNotifier {
     debugPrint('[Bluetooth RFCOMM] Pushed ${rawBytes.length} bytes: ${packet['type']}');
   }
 
-  /// Inject raw bytes into the input stream (for testing & simulations)
   void receiveRawBytes(Uint8List bytes) {
     _rawByteStreamController.add(bytes);
   }
 
-  /// Invisible Auto-Reconnect Loop (The Stability Moat)
   void triggerConnectionDrop() {
     _state = BluetoothP2PState.reconnecting;
     notifyListeners();
 
     if (_isAutoReconnectEnabled && _lastConnectedPeer != null) {
       _reconnectTimer?.cancel();
-      // Silently ping target MAC every 3 seconds
       _reconnectTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
         debugPrint('[Invisible Auto-Reconnect] Pinging ${_lastConnectedPeer!.address}...');
-        // Range check simulation:
         await Future.delayed(const Duration(milliseconds: 300));
-        // Auto-reconnect succeeds
         timer.cancel();
         _state = BluetoothP2PState.connected;
         HapticFeedback.mediumImpact();
@@ -495,17 +826,15 @@ class BluetoothP2PService extends ChangeNotifier {
     }
   }
 
-  /// Toggle Auto-Reconnect
   void toggleAutoReconnect(bool val) {
     _isAutoReconnectEnabled = val;
     notifyListeners();
   }
 
-  /// The Persistent Dark Vault: Save & Load
   void _saveChatHistory() {
     final addr = _connectedDeviceAddress;
     if (addr == null || addr.isEmpty) return;
-    final jsonList = _messages.map((m) => m.toJson()).toList();
+    final jsonList = _messages.where((m) => !m.isGhost).map((m) => m.toJson()).toList();
     StorageService.saveString('bt_chat_$addr', jsonEncode(jsonList));
   }
 
@@ -524,7 +853,6 @@ class BluetoothP2PService extends ChangeNotifier {
     }
   }
 
-  /// Burn Chat (Military Self-Destruct)
   void burnChat() {
     final addr = _connectedDeviceAddress;
     _messages.clear();
@@ -534,7 +862,6 @@ class BluetoothP2PService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Disconnect current Bluetooth session
   void disconnect() {
     _reconnectTimer?.cancel();
     _state = BluetoothP2PState.disconnected;

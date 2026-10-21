@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,14 +10,13 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import '../services/bluetooth_p2p_service.dart';
-import '../services/encryption_service.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/radar_scanner.dart';
 
 // ==========================================
-// SCREEN 1: BLUETOOTH HOME (HOST / JOIN / VAULT)
+// SCREEN 1: BLUETOOTH HOME (HOST / JOIN)
 // ==========================================
 class BluetoothHomeScreen extends StatefulWidget {
   final BluetoothP2PService bluetoothService;
@@ -93,7 +93,7 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
       appBar: AppBar(
         backgroundColor: bgColor,
         title: Text(
-          'Walkie-Talkie & Bluetooth P2P',
+          'Bluetooth Tactical Suite',
           style: TextStyle(color: textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -103,7 +103,7 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
               color: AppTheme.primaryCyan,
               size: 20,
             ),
-            tooltip: _isStealthDark ? 'Switch to Light Theme' : 'Stealth Dark Mode',
+            tooltip: _isStealthDark ? 'Light Theme' : 'Stealth Dark Mode',
             onPressed: _toggleTheme,
           ),
           Container(
@@ -127,7 +127,6 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
       ),
       body: Stack(
         children: [
-          // Background Radar Scanner Glow
           Positioned.fill(
             child: Center(
               child: Opacity(
@@ -147,7 +146,6 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
               child: Column(
                 children: [
-                  // Protocol & Architecture Banner
                   GlassContainer(
                     borderRadius: 18,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -171,11 +169,11 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Military-Grade RFCOMM & Voice Pipe Ready',
+                                'Stealth Walkie-Talkie & Mini-Games Ready',
                                 style: TextStyle(color: textPrimary, fontSize: 12.5, fontWeight: FontWeight.w700),
                               ),
                               Text(
-                                'UUID: 4a9b6040... • AES-256 E2E • Invisible Auto-Reconnect',
+                                'Ghost Messages • 10KB Meme Chunks • Panic Disguise',
                                 style: TextStyle(color: textMuted, fontSize: 10, fontFamily: 'monospace'),
                               ),
                             ],
@@ -187,7 +185,7 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
 
                   const Spacer(),
 
-                  // Option 1: HOST CHAT (Server)
+                  // Option 1: HOST CHAT
                   GestureDetector(
                     onTap: _onHostPressed,
                     child: Container(
@@ -226,12 +224,12 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Host Walkie-Talkie',
+                                'Host Walkie-Talkie Room',
                                 style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w800),
                               ),
                               SizedBox(height: 3),
                               Text(
-                                'Become Server • Listen on private RFCOMM pipe',
+                                'Server Mode • Encrypted RFCOMM Pipe',
                                 style: TextStyle(color: Colors.black87, fontSize: 11.5, fontWeight: FontWeight.w500),
                               ),
                             ],
@@ -243,7 +241,7 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Option 2: JOIN CHAT (Client)
+                  // Option 2: JOIN CHAT
                   GestureDetector(
                     onTap: _onJoinPressed,
                     child: Container(
@@ -282,12 +280,12 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Join Walkie-Talkie',
+                                'Join Walkie-Talkie Room',
                                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
                               ),
                               SizedBox(height: 3),
                               Text(
-                                'Scan nearby RFCOMM hosts & connect directly',
+                                'Scan nearby RFCOMM hosts & connect',
                                 style: TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w500),
                               ),
                             ],
@@ -308,7 +306,7 @@ class _BluetoothHomeScreenState extends State<BluetoothHomeScreen> {
   }
 }
 
-// Host Listening Bottom Sheet Modal
+// Host Waiting Sheet
 class _HostWaitingSheet extends StatelessWidget {
   final BluetoothP2PService bluetoothService;
   final VoidCallback onConnected;
@@ -385,9 +383,7 @@ class _HostWaitingSheet extends StatelessWidget {
   }
 }
 
-// ==========================================
-// SCREEN 2: DISCOVERY (LIST NEARBY HOSTS)
-// ==========================================
+// Discovery Screen
 class BluetoothDiscoveryScreen extends StatefulWidget {
   final BluetoothP2PService bluetoothService;
   final bool isDark;
@@ -520,8 +516,13 @@ class _BluetoothDiscoveryScreenState extends State<BluetoothDiscoveryScreen> {
 
 // ==========================================
 // SCREEN 3: ADVANCED WALKIE-TALKIE ROOM
-// Features: Voice Notes, Invisible Auto-Reconnect,
-// Typing & Read Receipts, AES-256 & Burn Chat
+// Features:
+// 1. Voice Notes (PTT)
+// 2. Invisible Auto-Reconnect
+// 3. Mini Games (In-Chat Tic-Tac-Toe)
+// 4. Ghost Messages (Self-Destructing Text)
+// 5. Image/Meme Chunking (10KB sequential packets)
+// 6. Stealth Panic Mode (Fake Calculator Disguise)
 // ==========================================
 class BluetoothChatRoomScreen extends StatefulWidget {
   final BluetoothP2PService bluetoothService;
@@ -545,10 +546,17 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
   String? _currentlyPlayingMsgId;
   StreamSubscription? _reconnectSubscription;
 
+  // Feature 2: Stealth Panic Mode
+  bool _isStealthDisguised = false;
+
+  // Feature 4: Ghost Message Timer (0 = normal, 5, 10, 30 seconds)
+  int _ghostTimerSec = 0;
+  final Map<String, int> _activeGhostCountdowns = {};
+  final Map<String, Timer> _activeGhostTimers = {};
+
   @override
   void initState() {
     super.initState();
-    // Listen for seamless reconnect events
     _reconnectSubscription = widget.bluetoothService.reconnectEventStream.listen((event) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -589,11 +597,15 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
     if (text.isEmpty) return;
 
     _textController.clear();
-    widget.bluetoothService.sendMessage(text);
+    if (_ghostTimerSec > 0) {
+      widget.bluetoothService.sendGhostMessage(text, _ghostTimerSec);
+    } else {
+      widget.bluetoothService.sendMessage(text);
+    }
     _scrollToBottom();
   }
 
-  // --- FEATURE 1: WALKIE-TALKIE PTT AUDIO RECORDING ---
+  // --- FEATURE 1: PTT VOICE RECORDING ---
   Future<void> _startVoiceRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
@@ -671,116 +683,133 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
     }
   }
 
-  // --- FEATURE 4: CIPHER INSPECTION DIALOG ---
-  void _showCipherInspector(BluetoothChatMessage msg) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: widget.isDark ? const Color(0xFF131A29) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Row(
-          children: [
-            Icon(Icons.lock_rounded, color: AppTheme.primaryCyan),
-            SizedBox(width: 8),
-            Text('AES-256 Packet Inspector', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Decrypted Plaintext:', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-            const SizedBox(height: 4),
-            Text(msg.text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            const SizedBox(height: 14),
-            const Text('Raw Wire Ciphertext (AES-256 CBC):', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: widget.isDark ? Colors.black38 : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                msg.rawCipher.isNotEmpty ? msg.rawCipher : '[Encrypted binary stream]',
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppTheme.primaryCyan),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'ZeroPing uses a 256-bit AES key derived from the RFCOMM room UUID. Packets are cryptographically unreadable to Bluetooth sniffers.',
-              style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-        ],
-      ),
+  // --- FEATURE 3: IN-CHAT MINI-GAME (TIC-TAC-TOE) ---
+  void _startOrResetGame() {
+    final gameId = 'game_${DateTime.now().millisecondsSinceEpoch}';
+    widget.bluetoothService.sendGameMove(
+      gameId: gameId,
+      board: List.filled(9, 0),
+      turn: 'X',
+      winner: null,
     );
-  }
-
-  // --- FEATURE 5: BURN CHAT (MILITARY SELF-DESTRUCT) ---
-  void _confirmBurnChat() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: widget.isDark ? const Color(0xFF131A29) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Row(
-          children: [
-            Icon(Icons.local_fire_department_rounded, color: AppTheme.accentRose),
-            SizedBox(width: 8),
-            Text('Burn Chat (Self-Destruct)?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          'This will permanently delete and wipe all encrypted chat messages and voice notes from the local dark vault. This action cannot be undone.',
-          style: TextStyle(fontSize: 12),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              widget.bluetoothService.burnChat();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: AppTheme.accentRose,
-                  content: Text('🔥 Chat history burned and wiped from local vault!'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accentRose,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Burn All Messages'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _simulateIncomingEcho() {
-    final sampleReply = "Received over RFCOMM! Voice and Text Decrypted (0.2ms latency) 🔥";
-    final cipher = EncryptionService.encryptText(sampleReply);
-    final packet = jsonEncode({
-      'type': 'msg',
-      'id': 'sim_${DateTime.now().millisecondsSinceEpoch}',
-      'cipher': cipher,
-    });
-    widget.bluetoothService.receiveRawBytes(Uint8List.fromList(utf8.encode(packet)));
     _scrollToBottom();
+  }
+
+  void _handleGameCellTap(BluetoothChatMessage gameMsg, int index) {
+    if (gameMsg.gameWinner != null) return;
+    if (gameMsg.gameState[index] != 0) return;
+
+    // Clone board
+    final board = List<int>.from(gameMsg.gameState);
+    final isX = gameMsg.gameTurn == 'X';
+    board[index] = isX ? 1 : 2;
+
+    // Check winner
+    String? winner = _checkTicTacToeWinner(board);
+    final nextTurn = isX ? 'O' : 'X';
+
+    HapticFeedback.lightImpact();
+    widget.bluetoothService.sendGameMove(
+      gameId: gameMsg.id,
+      board: board,
+      turn: nextTurn,
+      winner: winner,
+    );
+  }
+
+  String? _checkTicTacToeWinner(List<int> b) {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+      [0, 4, 8], [2, 4, 6],             // Diagonals
+    ];
+    for (final line in lines) {
+      if (b[line[0]] != 0 && b[line[0]] == b[line[1]] && b[line[1]] == b[line[2]]) {
+        return b[line[0]] == 1 ? 'X' : 'O';
+      }
+    }
+    if (!b.contains(0)) return 'Draw';
+    return null;
+  }
+
+  // --- FEATURE 4: GHOST MESSAGES TAP & COUNTDOWN ---
+  void _revealGhostMessage(BluetoothChatMessage msg) {
+    if (msg.isGhostBurned) return;
+    if (_activeGhostCountdowns.containsKey(msg.id)) return;
+
+    HapticFeedback.mediumImpact();
+    setState(() {
+      msg.isGhostRevealed = true;
+      _activeGhostCountdowns[msg.id] = msg.ghostDurationSec;
+    });
+
+    _activeGhostTimers[msg.id] = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final current = _activeGhostCountdowns[msg.id] ?? 0;
+      if (current <= 1) {
+        timer.cancel();
+        _activeGhostTimers.remove(msg.id);
+        _activeGhostCountdowns.remove(msg.id);
+        HapticFeedback.heavyImpact();
+        widget.bluetoothService.burnGhostMessage(msg.id);
+      } else {
+        setState(() {
+          _activeGhostCountdowns[msg.id] = current - 1;
+        });
+      }
+    });
+  }
+
+  // --- FEATURE 5: IMAGE / MEME CHUNKING ---
+  Future<void> _pickAndSendMeme() async {
+    try {
+      final picked = await FilePicker.pickFiles(type: FileType.image);
+      if (picked.isNotEmpty && picked.first.path != null) {
+        final file = File(picked.first.path!);
+        final bytes = await file.readAsBytes();
+        await widget.bluetoothService.sendImageInChunks(imageBytes: bytes);
+        _scrollToBottom();
+      }
+    } catch (e) {
+      debugPrint('Image pick error: $e');
+    }
+  }
+
+  void _sendDemoMemeChunk() async {
+    // Generate a lightweight 64x64 procedural gradient image buffer for demo chunk testing
+    final demoBytes = _generateDemoMemeBytes();
+    await widget.bluetoothService.sendImageInChunks(imageBytes: demoBytes);
+    _scrollToBottom();
+  }
+
+  Uint8List _generateDemoMemeBytes() {
+    // Small valid 1x1 PNG bytes or test chunk stream
+    const base64Png =
+        'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAABJmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiLz4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsmQ9wIAAABGSURBVHja7c4xAQAwEAOh+df+pTsHAqYhYCQCRiJgJAJGImAkAkYiYCQCRiJgJAJGImAkAkYiYCQCRiJgJAJGImAkAkb6B3bKAl92lU1RAAAAAElFTkSuQmCC';
+    return base64Decode(base64Png);
+  }
+
+  // --- FEATURE 2: PANIC GESTURE DISGUISE ---
+  void _triggerStealthDisguise() {
+    HapticFeedback.heavyImpact();
+    setState(() => _isStealthDisguised = true);
+  }
+
+  void _exitStealthDisguise() {
+    HapticFeedback.lightImpact();
+    setState(() => _isStealthDisguised = false);
   }
 
   @override
   void dispose() {
     _recordTimer?.cancel();
     _reconnectSubscription?.cancel();
+    for (final t in _activeGhostTimers.values) {
+      t.cancel();
+    }
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     _textController.dispose();
@@ -790,6 +819,11 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // IF PANIC GESTURE TRIGGERED: Render realistic functional fake calculator!
+    if (_isStealthDisguised) {
+      return _FakeCalculatorDisguise(onUnlock: _exitStealthDisguise);
+    }
+
     final isDark = widget.isDark;
     final bgColor = isDark ? const Color(0xFF090D16) : AppTheme.background;
     final cardColor = isDark ? const Color(0xFF131A29) : AppTheme.surfaceCard;
@@ -801,7 +835,7 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
       builder: (context, _) {
         final isConnected = widget.bluetoothService.state == BluetoothP2PState.connected;
         final isReconnecting = widget.bluetoothService.state == BluetoothP2PState.reconnecting;
-        final peerName = widget.bluetoothService.connectedDeviceName ?? 'Bluetooth Peer';
+        final peerName = widget.bluetoothService.connectedDeviceName ?? 'Tactical Peer';
         final peerAddress = widget.bluetoothService.connectedDeviceAddress ?? 'RFCOMM Pipe';
         final isPeerTyping = widget.bluetoothService.isPeerTyping;
 
@@ -810,75 +844,82 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
           appBar: AppBar(
             backgroundColor: bgColor,
             titleSpacing: 0,
-            title: Row(
-              children: [
-                // Live Status Pulse Dot
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isConnected
-                        ? AppTheme.accentGreen
-                        : (isReconnecting ? AppTheme.accentYellow : AppTheme.accentRose),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isConnected ? AppTheme.accentGreen : AppTheme.accentRose).withValues(alpha: 0.8),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(peerName, style: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
-                      if (isPeerTyping)
-                        const Text(
-                          'Typing encrypted note...',
-                          style: TextStyle(color: AppTheme.primaryCyan, fontSize: 10, fontWeight: FontWeight.bold),
-                        )
-                      else
-                        Text(
-                          isConnected
-                              ? 'Connected • $peerAddress'
-                              : (isReconnecting ? 'Auto-Reconnecting in background...' : 'Disconnected'),
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isConnected
-                                ? AppTheme.accentGreen
-                                : (isReconnecting ? AppTheme.accentYellow : AppTheme.accentRose),
-                            fontFamily: 'monospace',
-                          ),
+            title: GestureDetector(
+              onDoubleTap: _triggerStealthDisguise, // Double tap app bar for Panic Disguise
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isConnected
+                          ? AppTheme.accentGreen
+                          : (isReconnecting ? AppTheme.accentYellow : AppTheme.accentRose),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isConnected ? AppTheme.accentGreen : AppTheme.accentRose).withValues(alpha: 0.8),
+                          blurRadius: 8,
+                          spreadRadius: 1,
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(peerName, style: TextStyle(color: textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                        if (isPeerTyping)
+                          const Text(
+                            'Typing encrypted note...',
+                            style: TextStyle(color: AppTheme.primaryCyan, fontSize: 10, fontWeight: FontWeight.bold),
+                          )
+                        else
+                          Text(
+                            isConnected
+                                ? 'Connected • $peerAddress'
+                                : (isReconnecting ? 'Auto-Reconnecting...' : 'Disconnected'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isConnected
+                                  ? AppTheme.accentGreen
+                                  : (isReconnecting ? AppTheme.accentYellow : AppTheme.accentRose),
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             actions: [
-              // Test Simulation Button
+              // Feature 2: Stealth Panic Mode Icon
               IconButton(
-                icon: const Icon(Icons.flash_on_rounded, color: AppTheme.accentYellow, size: 20),
-                tooltip: 'Simulate Incoming Encrypted Packet',
-                onPressed: _simulateIncomingEcho,
+                icon: const Icon(Icons.visibility_off_rounded, color: AppTheme.accentYellow, size: 20),
+                tooltip: 'Panic Disguise (Fake Calculator)',
+                onPressed: _triggerStealthDisguise,
               ),
-              // Burn Chat Button
+              // Feature 3: Start In-Chat Mini-Game
+              IconButton(
+                icon: const Icon(Icons.sports_esports_rounded, color: AppTheme.primaryCyan, size: 22),
+                tooltip: 'Start Tic-Tac-Toe Game',
+                onPressed: _startOrResetGame,
+              ),
+              // Burn Chat
               IconButton(
                 icon: const Icon(Icons.local_fire_department_rounded, color: AppTheme.accentRose, size: 20),
                 tooltip: 'Burn Chat (Self-Destruct)',
-                onPressed: _confirmBurnChat,
-              ),
-              // Disconnect
-              IconButton(
-                icon: const Icon(Icons.power_settings_new_rounded, color: AppTheme.textMuted),
-                tooltip: 'Disconnect',
                 onPressed: () {
-                  widget.bluetoothService.disconnect();
-                  Navigator.pop(context);
+                  widget.bluetoothService.burnChat();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      backgroundColor: AppTheme.accentRose,
+                      content: Text('🔥 Chat history burned and wiped from local vault!'),
+                    ),
+                  );
                 },
               ),
             ],
@@ -886,32 +927,30 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                // Security / Auto-Reconnect Banner
+                // Top Protocol Banner
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   color: isDark ? const Color(0xFF131A29) : AppTheme.surfaceCard.withValues(alpha: 0.8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.lock_rounded, size: 12, color: AppTheme.accentGreen),
+                          Icon(Icons.shield_rounded, size: 12, color: AppTheme.accentGreen),
                           SizedBox(width: 5),
                           Text(
-                            'AES-256 GCM • Invisible Auto-Reconnect Active',
+                            'AES-256 E2E • Ghost Mode & Chunks Active',
                             style: TextStyle(fontSize: 10.5, color: AppTheme.accentGreen, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      // Drop range trigger simulation
+                      // Drop range simulation
                       InkWell(
-                        onTap: () {
-                          widget.bluetoothService.triggerConnectionDrop();
-                        },
+                        onTap: () => widget.bluetoothService.triggerConnectionDrop(),
                         child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                           child: Text(
-                            'Test Out-Of-Range',
+                            'Simulate Drop',
                             style: TextStyle(fontSize: 10, color: AppTheme.primaryCyan, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -936,14 +975,14 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Target out of range. Silently auto-reconnecting...',
+                          'Invisible Auto-Reconnect active... Pinging MAC',
                           style: TextStyle(fontSize: 11, color: AppTheme.accentYellow, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                   ),
 
-                // Chat Messages List
+                // Messages List
                 Expanded(
                   child: StreamBuilder<BluetoothChatMessage>(
                     stream: widget.bluetoothService.messageStream,
@@ -961,17 +1000,27 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
                                   shape: BoxShape.circle,
                                   color: AppTheme.primaryCyan.withValues(alpha: 0.1),
                                 ),
-                                child: const Icon(Icons.mic_rounded, size: 36, color: AppTheme.primaryCyan),
+                                child: const Icon(Icons.flash_on_rounded, size: 36, color: AppTheme.primaryCyan),
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Hold Mic to broadcast Walkie-Talkie Voice Note',
-                                style: TextStyle(color: textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
+                                'Zero-Latency Tactical Chat',
+                                style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Or type encrypted text below (0% internet required)',
+                                'Hold Mic to Talk • Send Ghost Messages • Play Mini-Games',
                                 style: TextStyle(color: textMuted, fontSize: 11),
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                icon: const Icon(Icons.sports_esports_rounded, size: 16),
+                                label: const Text('Play Tic-Tac-Toe'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryCyan,
+                                  side: const BorderSide(color: AppTheme.primaryCyan),
+                                ),
+                                onPressed: _startOrResetGame,
                               ),
                             ],
                           ),
@@ -1030,19 +1079,64 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
                     ),
                   ),
 
-                // Bottom Input Bar with Walkie-Talkie PTT Button
+                // Input Bar with Ghost Toggle, Meme Chunking, and PTT
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
+                      // Ghost Self-Destruct Timer Toggle
+                      IconButton(
+                        icon: Icon(
+                          _ghostTimerSec > 0 ? Icons.local_fire_department_rounded : Icons.timer_outlined,
+                          color: _ghostTimerSec > 0 ? AppTheme.accentRose : textMuted,
+                          size: 22,
+                        ),
+                        tooltip: 'Ghost Mode (${_ghostTimerSec}s)',
+                        onPressed: () {
+                          setState(() {
+                            if (_ghostTimerSec == 0) {
+                              _ghostTimerSec = 5;
+                            } else if (_ghostTimerSec == 5) {
+                              _ghostTimerSec = 10;
+                            } else if (_ghostTimerSec == 10) {
+                              _ghostTimerSec = 30;
+                            } else {
+                              _ghostTimerSec = 0;
+                            }
+                          });
+                          HapticFeedback.lightImpact();
+                          if (_ghostTimerSec > 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                duration: const Duration(milliseconds: 1200),
+                                backgroundColor: AppTheme.accentRose,
+                                content: Text('🔥 Ghost Mode: Messages self-destruct in ${_ghostTimerSec}s after reading!'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+                      // Meme / Image Chunk Picker (Tap: Pick file, Hold: Demo stream)
+                      IconButton(
+                        icon: Icon(Icons.image_rounded, color: textMuted, size: 22),
+                        tooltip: 'Stream Meme (Hold for Demo)',
+                        onPressed: _pickAndSendMeme,
+                        onLongPress: _sendDemoMemeChunk,
+                      ),
+
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
                             color: cardColor,
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: isDark ? Colors.white12 : AppTheme.glassBorder),
+                            border: Border.all(
+                              color: _ghostTimerSec > 0
+                                  ? AppTheme.accentRose.withValues(alpha: 0.7)
+                                  : (isDark ? Colors.white12 : AppTheme.glassBorder),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: TextField(
                             controller: _textController,
                             style: TextStyle(color: textPrimary, fontSize: 14),
@@ -1050,8 +1144,12 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
                               widget.bluetoothService.sendTypingStatus(val.isNotEmpty);
                             },
                             decoration: InputDecoration(
-                              hintText: 'Type encrypted message...',
-                              hintStyle: TextStyle(color: textMuted),
+                              hintText: _ghostTimerSec > 0
+                                  ? 'Type Ghost Secret (${_ghostTimerSec}s)...'
+                                  : 'Type encrypted message...',
+                              hintStyle: TextStyle(
+                                color: _ghostTimerSec > 0 ? AppTheme.accentRose.withValues(alpha: 0.7) : textMuted,
+                              ),
                               border: InputBorder.none,
                             ),
                             onSubmitted: (_) => _sendText(),
@@ -1062,9 +1160,9 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
 
                       // Text Send Button
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: AppTheme.primaryGradient,
+                          color: _ghostTimerSec > 0 ? AppTheme.accentRose : AppTheme.primaryCyan,
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
@@ -1111,106 +1209,317 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
     final timeStr = DateFormat('hh:mm a').format(msg.timestamp);
     final isPlaying = _currentlyPlayingMsgId == msg.id;
 
-    return Align(
-      alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () => _showCipherInspector(msg),
+    // Feature 3: In-Chat Mini-Game (Tic-Tac-Toe Board)
+    if (msg.isGame) {
+      return Align(
+        alignment: Alignment.center,
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: msg.isMe
-                ? (isDark ? const Color(0xFF0284C7).withValues(alpha: 0.3) : AppTheme.primaryCyan.withValues(alpha: 0.18))
-                : (isDark ? const Color(0xFF1E293B) : AppTheme.surfaceCard),
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(msg.isMe ? 16 : 4),
-              bottomRight: Radius.circular(msg.isMe ? 4 : 16),
-            ),
-            border: Border.all(
-              color: msg.isMe
-                  ? AppTheme.primaryCyan.withValues(alpha: 0.4)
-                  : (isDark ? Colors.white10 : AppTheme.glassBorder),
-              width: 1,
-            ),
+            color: isDark ? const Color(0xFF131A29) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.primaryCyan.withValues(alpha: 0.4), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
-            crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Voice Note Player Card
-              if (msg.isVoiceNote) ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
-                        color: AppTheme.primaryCyan,
-                        size: 32,
-                      ),
-                      onPressed: () => _playVoiceNote(msg),
-                    ),
-                    const SizedBox(width: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            for (int i = 0; i < 10; i++)
-                              Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                                width: 3,
-                                height: 8.0 + (i % 4) * 5,
-                                decoration: BoxDecoration(
-                                  color: isPlaying ? AppTheme.primaryCyan : const Color(0xFF94A3B8),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Voice Note • 0:${msg.voiceNoteDurationSec.toString().padLeft(2, '0')}',
-                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.primaryCyan),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ] else ...[
-                Text(
-                  msg.text,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : AppTheme.textPrimary,
-                    fontSize: 13.5,
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 4),
-
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock_rounded, size: 9, color: AppTheme.accentGreen),
-                  const SizedBox(width: 3),
+                  const Icon(Icons.sports_esports_rounded, color: AppTheme.primaryCyan, size: 18),
+                  const SizedBox(width: 8),
                   Text(
-                    timeStr,
+                    msg.text,
                     style: TextStyle(
-                      color: isDark ? Colors.white54 : AppTheme.textMuted,
-                      fontSize: 9.5,
+                      color: isDark ? Colors.white : AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
-                  if (msg.isMe) ...[
-                    const SizedBox(width: 4),
-                    _buildStatusTicks(msg.status),
-                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+              // 3x3 Tic Tac Toe Grid
+              SizedBox(
+                width: 180,
+                height: 180,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 6,
+                  ),
+                  itemCount: 9,
+                  itemBuilder: (ctx, i) {
+                    final val = msg.gameState[i];
+                    return GestureDetector(
+                      onTap: () => _handleGameCellTap(msg, i),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: val == 1
+                                ? AppTheme.primaryCyan
+                                : (val == 2 ? const Color(0xFF8B5CF6) : Colors.transparent),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            val == 1 ? 'X' : (val == 2 ? 'O' : ''),
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: val == 1 ? AppTheme.primaryCyan : const Color(0xFF8B5CF6),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                msg.gameWinner != null
+                    ? 'Game Over • Tap Board to Restart'
+                    : 'Current Turn: ${msg.gameTurn}',
+                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Feature 5: Image / Meme Chunk Bubble
+    if (msg.isImage) {
+      return Align(
+        alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppTheme.primaryCyan.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: msg.imageBytes != null
+                    ? Image.memory(
+                        msg.imageBytes!,
+                        fit: BoxFit.cover,
+                        height: 180,
+                        width: double.infinity,
+                      )
+                    : Container(
+                        height: 120,
+                        color: Colors.black12,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const CircularProgressIndicator(color: AppTheme.primaryCyan),
+                              const SizedBox(height: 8),
+                              Text(msg.text, style: const TextStyle(fontSize: 11)),
+                            ],
+                          ),
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '10KB Chunk Protocol',
+                    style: TextStyle(fontSize: 10, color: AppTheme.primaryCyan, fontWeight: FontWeight.bold),
+                  ),
+                  Text(timeStr, style: const TextStyle(fontSize: 9.5, color: AppTheme.textMuted)),
                 ],
               ),
             ],
           ),
+        ),
+      );
+    }
+
+    // Feature 4: Ghost Message Bubble
+    if (msg.isGhost) {
+      final remaining = _activeGhostCountdowns[msg.id];
+      final isRevealed = msg.isGhostRevealed && remaining != null;
+
+      return Align(
+        alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () {
+            if (!msg.isMe && !isRevealed) {
+              _revealGhostMessage(msg);
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3B1D28) : const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.accentRose.withValues(alpha: 0.6), width: 1.2),
+            ),
+            child: Column(
+              crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.local_fire_department_rounded, size: 16, color: AppTheme.accentRose),
+                    const SizedBox(width: 6),
+                    Text(
+                      isRevealed
+                          ? '🔥 Self-Destructing in ${remaining}s'
+                          : (msg.isMe ? '👻 Ghost Message (${msg.ghostDurationSec}s)' : '👻 Ghost Secret (Tap to Read)'),
+                      style: const TextStyle(
+                        color: AppTheme.accentRose,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  (!msg.isMe && !isRevealed)
+                      ? '•••••••••••••••••••••••••'
+                      : msg.text,
+                  style: TextStyle(
+                    color: (!msg.isMe && !isRevealed) ? AppTheme.textMuted : (isDark ? Colors.white : AppTheme.textPrimary),
+                    fontSize: 14,
+                    fontWeight: isRevealed ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  timeStr,
+                  style: TextStyle(color: isDark ? Colors.white38 : AppTheme.textMuted, fontSize: 9.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Default Regular Text & Voice Note Bubble
+    return Align(
+      alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: msg.isMe
+              ? (isDark ? const Color(0xFF0284C7).withValues(alpha: 0.3) : AppTheme.primaryCyan.withValues(alpha: 0.18))
+              : (isDark ? const Color(0xFF1E293B) : AppTheme.surfaceCard),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(msg.isMe ? 16 : 4),
+            bottomRight: Radius.circular(msg.isMe ? 4 : 16),
+          ),
+          border: Border.all(
+            color: msg.isMe
+                ? AppTheme.primaryCyan.withValues(alpha: 0.4)
+                : (isDark ? Colors.white10 : AppTheme.glassBorder),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (msg.isVoiceNote) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                      color: AppTheme.primaryCyan,
+                      size: 32,
+                    ),
+                    onPressed: () => _playVoiceNote(msg),
+                  ),
+                  const SizedBox(width: 4),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          for (int i = 0; i < 10; i++)
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                              width: 3,
+                              height: 8.0 + (i % 4) * 5,
+                              decoration: BoxDecoration(
+                                color: isPlaying ? AppTheme.primaryCyan : const Color(0xFF94A3B8),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Voice Note • 0:${msg.voiceNoteDurationSec.toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.primaryCyan),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ] else ...[
+              Text(
+                msg.text,
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppTheme.textPrimary,
+                  fontSize: 13.5,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 4),
+
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_rounded, size: 9, color: AppTheme.accentGreen),
+                const SizedBox(width: 3),
+                Text(
+                  timeStr,
+                  style: TextStyle(
+                    color: isDark ? Colors.white54 : AppTheme.textMuted,
+                    fontSize: 9.5,
+                  ),
+                ),
+                if (msg.isMe) ...[
+                  const SizedBox(width: 4),
+                  _buildStatusTicks(msg.status),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1221,11 +1530,198 @@ class _BluetoothChatRoomScreenState extends State<BluetoothChatRoomScreen> {
       case BtMessageStatus.sending:
         return const Icon(Icons.access_time_rounded, size: 11, color: AppTheme.textMuted);
       case BtMessageStatus.sent:
-        return const Icon(Icons.check_rounded, size: 12, color: AppTheme.textMuted); // Single tick
+        return const Icon(Icons.check_rounded, size: 12, color: AppTheme.textMuted);
       case BtMessageStatus.delivered:
-        return const Icon(Icons.done_all_rounded, size: 12, color: AppTheme.textMuted); // Double tick grey
+        return const Icon(Icons.done_all_rounded, size: 12, color: AppTheme.textMuted);
       case BtMessageStatus.read:
-        return const Icon(Icons.done_all_rounded, size: 12, color: Color(0xFF00E5FF)); // WhatsApp Blue Tick!
+        return const Icon(Icons.done_all_rounded, size: 12, color: Color(0xFF00E5FF));
     }
+  }
+}
+
+// ==========================================
+// FEATURE 2: FAKE FUNCTIONAL CALCULATOR DISGUISE
+// (The Panic Gesture Screen)
+// ==========================================
+class _FakeCalculatorDisguise extends StatefulWidget {
+  final VoidCallback onUnlock;
+
+  const _FakeCalculatorDisguise({required this.onUnlock});
+
+  @override
+  State<_FakeCalculatorDisguise> createState() => _FakeCalculatorDisguiseState();
+}
+
+class _FakeCalculatorDisguiseState extends State<_FakeCalculatorDisguise> {
+  String _display = '0';
+  double? _firstOperand;
+  String? _operator;
+  bool _shouldResetDisplay = false;
+
+  void _onDigit(String digit) {
+    setState(() {
+      if (_display == '0' || _shouldResetDisplay) {
+        _display = digit;
+        _shouldResetDisplay = false;
+      } else {
+        _display += digit;
+      }
+    });
+  }
+
+  void _onOperator(String op) {
+    setState(() {
+      _firstOperand = double.tryParse(_display);
+      _operator = op;
+      _shouldResetDisplay = true;
+    });
+  }
+
+  void _onEqual() {
+    if (_firstOperand == null || _operator == null) return;
+    final secondOperand = double.tryParse(_display) ?? 0;
+    double result = 0;
+
+    switch (_operator) {
+      case '+':
+        result = _firstOperand! + secondOperand;
+        break;
+      case '-':
+        result = _firstOperand! - secondOperand;
+        break;
+      case '×':
+        result = _firstOperand! * secondOperand;
+        break;
+      case '÷':
+        result = secondOperand != 0 ? _firstOperand! / secondOperand : 0;
+        break;
+    }
+
+    setState(() {
+      _display = result.toString().endsWith('.0')
+          ? result.toInt().toString()
+          : result.toStringAsFixed(2);
+      _firstOperand = null;
+      _operator = null;
+      _shouldResetDisplay = true;
+    });
+  }
+
+  void _onClear() {
+    setState(() {
+      _display = '0';
+      _firstOperand = null;
+      _operator = null;
+      _shouldResetDisplay = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Secret Unmask Banner: Double tap to return to chat!
+            GestureDetector(
+              onDoubleTap: widget.onUnlock,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.transparent,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Calculator', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                    Text('Double-tap top to return', style: TextStyle(color: Colors.white24, fontSize: 10)),
+                  ],
+                ),
+              ),
+            ),
+
+            const Spacer(),
+
+            // Real calculator display
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  _display,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 54,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ),
+            ),
+
+            // Calculator Keyboard Grid
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _calcRow(['C', '+/-', '%', '÷'], [Colors.grey[700]!, Colors.grey[700]!, Colors.grey[700]!, Colors.orange]),
+                  _calcRow(['7', '8', '9', '×'], [Colors.grey[900]!, Colors.grey[900]!, Colors.grey[900]!, Colors.orange]),
+                  _calcRow(['4', '5', '6', '-'], [Colors.grey[900]!, Colors.grey[900]!, Colors.grey[900]!, Colors.orange]),
+                  _calcRow(['1', '2', '3', '+'], [Colors.grey[900]!, Colors.grey[900]!, Colors.grey[900]!, Colors.orange]),
+                  _calcRow(['0', '.', '='], [Colors.grey[900]!, Colors.grey[900]!, Colors.orange], isZeroRow: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _calcRow(List<String> labels, List<Color> colors, {bool isZeroRow = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: labels.map((lbl) {
+          final color = colors[labels.indexOf(lbl)];
+          final isZero = isZeroRow && lbl == '0';
+
+          return GestureDetector(
+            onLongPress: lbl == '=' ? widget.onUnlock : null, // Long-press = button unlocks
+            onTap: () {
+              HapticFeedback.lightImpact();
+              if (lbl == 'C') {
+                _onClear();
+              } else if (lbl == '=') {
+                _onEqual();
+              } else if (['+', '-', '×', '÷'].contains(lbl)) {
+                _onOperator(lbl);
+              } else if (lbl != '+/-' && lbl != '%') {
+                _onDigit(lbl);
+              }
+            },
+            child: Container(
+              width: isZero ? 160 : 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(36),
+              ),
+              child: Center(
+                child: Text(
+                  lbl,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 }
