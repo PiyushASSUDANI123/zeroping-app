@@ -31,10 +31,20 @@ class P2PSocketService extends ChangeNotifier {
   final Map<String, TransferTask> _activeTransfers = {};
   List<TransferTask> get activeTransfers => _activeTransfers.values.toList();
 
+  // Real-time Transfer Stream for StreamBuilder UI
+  final StreamController<TransferTask> _transferStreamController = StreamController<TransferTask>.broadcast();
+  Stream<TransferTask> get transferStream => _transferStreamController.stream;
+
   // Chat messages per peer: peerId -> list of messages
   final Map<String, List<ChatMessage>> _chatMessages = {};
 
   OnIncomingFileOffer? onIncomingFileOffer;
+  void Function(String text, String senderName)? onClipboardReceived;
+
+  // Dev Mode Real-Time Stats
+  int currentPingMs = 1;
+  double estimatedPacketLoss = 0.0;
+  int get activeSocketsCount => _connectedSockets.length;
 
   // Active receiver file streams: fileId -> RandomAccessFile
   final Map<String, RandomAccessFile> _openReceivingFiles = {};
@@ -202,6 +212,14 @@ class P2PSocketService extends ChangeNotifier {
     final type = json['type'] as String?;
 
     switch (type) {
+      case 'clipboard_sync':
+        final clipText = json['text'] as String? ?? '';
+        final sender = json['senderName'] as String? ?? peerIp;
+        if (onClipboardReceived != null && clipText.isNotEmpty) {
+          onClipboardReceived!(clipText, sender);
+        }
+        break;
+
       case 'chat':
         final msg = ChatMessage.fromJson(json, isMe: false);
         final senderId = msg.senderId.isNotEmpty ? msg.senderId : peerIp;
@@ -399,6 +417,23 @@ class P2PSocketService extends ChangeNotifier {
       }
       _lastSampledTime[task.id] = now;
       _lastSampledBytes[task.id] = task.transferredBytes;
+    }
+    // Push event to real-time stream for StreamBuilder
+    if (!_transferStreamController.isClosed) {
+      _transferStreamController.add(task);
+    }
+  }
+
+  /// Broadcast copied text to all connected sockets
+  void broadcastClipboard(String text) {
+    for (final socket in _connectedSockets.values) {
+      try {
+        _sendJson(socket, {
+          'type': 'clipboard_sync',
+          'text': text,
+          'senderName': _myDeviceName,
+        });
+      } catch (_) {}
     }
   }
 

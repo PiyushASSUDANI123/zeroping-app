@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/file_metadata.dart';
+import '../services/browser_drop_service.dart';
+import '../services/broadcast_engine.dart';
+import '../services/clipboard_service.dart';
 import '../services/discovery_service.dart';
+import '../services/iot_node_service.dart';
 import '../services/p2p_socket_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
@@ -12,11 +16,19 @@ import 'transfers_screen.dart';
 class HomeScreen extends StatefulWidget {
   final DiscoveryService discoveryService;
   final P2PSocketService socketService;
+  final BrowserDropService browserDropService;
+  final ClipboardService clipboardService;
+  final BroadcastEngine broadcastEngine;
+  final IoTNodeService iotNodeService;
 
   const HomeScreen({
     super.key,
     required this.discoveryService,
     required this.socketService,
+    required this.browserDropService,
+    required this.clipboardService,
+    required this.broadcastEngine,
+    required this.iotNodeService,
   });
 
   @override
@@ -62,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$peerName ($peerIp) wants to send you a file directly over TCP:',
+              '$peerName ($peerIp) wants to stream a file directly via TCP:',
               style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 14),
@@ -88,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (metadata.sha256.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Checksum: ${metadata.sha256.substring(0, 16)}...',
+                      'SHA-256: ${metadata.sha256.substring(0, 16)}...',
                       style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
                     ),
                   ],
@@ -105,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx, true);
-              // Switch to Transfers tab
               setState(() => _currentIndex = 1);
             },
             style: ElevatedButton.styleFrom(
@@ -113,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Accept & Stream'),
+            child: const Text('Accept & Stream Chunks'),
           ),
         ],
       ),
@@ -135,15 +146,25 @@ class _HomeScreenState extends State<HomeScreen> {
       RadarScreen(
         discoveryService: widget.discoveryService,
         socketService: widget.socketService,
+        browserDropService: widget.browserDropService,
+        clipboardService: widget.clipboardService,
+        broadcastEngine: widget.broadcastEngine,
+        iotNodeService: widget.iotNodeService,
         onNavigateToTransfers: () => setState(() => _currentIndex = 1),
       ),
-      TransfersScreen(socketService: widget.socketService),
+      TransfersScreen(
+        socketService: widget.socketService,
+        broadcastEngine: widget.broadcastEngine,
+      ),
       FilesScreen(
         discoveryService: widget.discoveryService,
         socketService: widget.socketService,
         onNavigateToTransfers: () => setState(() => _currentIndex = 1),
       ),
-      SettingsScreen(discoveryService: widget.discoveryService),
+      SettingsScreen(
+        discoveryService: widget.discoveryService,
+        socketService: widget.socketService,
+      ),
     ];
 
     return Scaffold(
@@ -174,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.tune_rounded),
-              label: 'Node',
+              label: 'Node Stats',
             ),
           ],
         ),

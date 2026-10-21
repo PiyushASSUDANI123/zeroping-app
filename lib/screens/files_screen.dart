@@ -60,10 +60,11 @@ class _FilesScreenState extends State<FilesScreen> {
     if (_selectedCategory == 'All') return _files;
     return _files.where((f) {
       final ext = f.path.split('.').last.toLowerCase();
-      if (_selectedCategory == 'Videos') return ['mp4', 'mkv', 'avi', 'mov'].contains(ext);
+      if (_selectedCategory == 'Videos') return ['mp4', 'mkv', 'avi', 'mov', 'webm'].contains(ext);
       if (_selectedCategory == 'Images') return ['jpg', 'jpeg', 'png', 'webp', 'gif'].contains(ext);
-      if (_selectedCategory == 'Audio') return ['mp3', 'wav', 'aac', 'flac'].contains(ext);
-      if (_selectedCategory == 'Docs') return ['pdf', 'doc', 'docx', 'txt', 'zip'].contains(ext);
+      if (_selectedCategory == 'Documents') return ['pdf', 'doc', 'docx', 'txt', 'csv', 'xlsx'].contains(ext);
+      if (_selectedCategory == 'APKs') return ['apk', 'aab', 'xapk'].contains(ext);
+      if (_selectedCategory == 'Audio') return ['mp3', 'wav', 'aac', 'flac', 'm4a'].contains(ext);
       return true;
     }).toList();
   }
@@ -163,14 +164,14 @@ class _FilesScreenState extends State<FilesScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
-              children: ['All', 'Videos', 'Images', 'Audio', 'Docs'].map((category) {
+              children: ['All', 'Videos', 'Images', 'Documents', 'APKs', 'Audio'].map((category) {
                 final isSelected = _selectedCategory == category;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     label: Text(category),
                     selected: isSelected,
-                    selectedColor: AppTheme.primaryCyan.withOpacity(0.25),
+                    selectedColor: AppTheme.primaryCyan.withValues(alpha: 0.25),
                     backgroundColor: AppTheme.surfaceCard,
                     labelStyle: TextStyle(
                       color: isSelected ? AppTheme.primaryCyan : AppTheme.textSecondary,
