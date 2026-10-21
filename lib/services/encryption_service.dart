@@ -6,8 +6,8 @@ import 'package:encrypt/encrypt.dart' as enc;
 /// Military-Grade AES-256 Encryption Suite for ZeroPing Walkie-Talkie
 class EncryptionService {
   // 32-byte (256-bit) shared symmetric key derived from room UUID
-  static late final enc.Key _aesKey;
-  static late final enc.IV _aesIv;
+  static enc.Key? _aesKey;
+  static enc.IV? _aesIv;
   static bool _initialized = false;
 
   static void init({String secretPassphrase = 'ZeroPingMilitaryGradeRFCOMM2026'}) {
@@ -23,7 +23,7 @@ class EncryptionService {
   }
 
   static void _ensureInit() {
-    if (!_initialized) {
+    if (!_initialized || _aesKey == null || _aesIv == null) {
       init();
     }
   }
@@ -32,8 +32,8 @@ class EncryptionService {
   static String encryptText(String plainText) {
     _ensureInit();
     try {
-      final encrypter = enc.Encrypter(enc.AES(_aesKey, mode: enc.AESMode.cbc));
-      final encrypted = encrypter.encrypt(plainText, iv: _aesIv);
+      final encrypter = enc.Encrypter(enc.AES(_aesKey!, mode: enc.AESMode.cbc));
+      final encrypted = encrypter.encrypt(plainText, iv: _aesIv!);
       return encrypted.base64;
     } catch (_) {
       return plainText;
@@ -44,8 +44,8 @@ class EncryptionService {
   static String decryptText(String base64Cipher) {
     _ensureInit();
     try {
-      final encrypter = enc.Encrypter(enc.AES(_aesKey, mode: enc.AESMode.cbc));
-      final decrypted = encrypter.decrypt(enc.Encrypted.fromBase64(base64Cipher), iv: _aesIv);
+      final encrypter = enc.Encrypter(enc.AES(_aesKey!, mode: enc.AESMode.cbc));
+      final decrypted = encrypter.decrypt(enc.Encrypted.fromBase64(base64Cipher), iv: _aesIv!);
       return decrypted;
     } catch (_) {
       return base64Cipher;
@@ -56,8 +56,8 @@ class EncryptionService {
   static Uint8List encryptBytes(Uint8List plainBytes) {
     _ensureInit();
     try {
-      final encrypter = enc.Encrypter(enc.AES(_aesKey, mode: enc.AESMode.cbc));
-      final encrypted = encrypter.encryptBytes(plainBytes, iv: _aesIv);
+      final encrypter = enc.Encrypter(enc.AES(_aesKey!, mode: enc.AESMode.cbc));
+      final encrypted = encrypter.encryptBytes(plainBytes, iv: _aesIv!);
       return encrypted.bytes;
     } catch (_) {
       return plainBytes;
@@ -68,8 +68,8 @@ class EncryptionService {
   static Uint8List decryptBytes(Uint8List cipherBytes) {
     _ensureInit();
     try {
-      final encrypter = enc.Encrypter(enc.AES(_aesKey, mode: enc.AESMode.cbc));
-      final decrypted = encrypter.decryptBytes(enc.Encrypted(cipherBytes), iv: _aesIv);
+      final encrypter = enc.Encrypter(enc.AES(_aesKey!, mode: enc.AESMode.cbc));
+      final decrypted = encrypter.decryptBytes(enc.Encrypted(cipherBytes), iv: _aesIv!);
       return Uint8List.fromList(decrypted);
     } catch (_) {
       return cipherBytes;

@@ -3,6 +3,7 @@ import 'package:zero_ping/models/file_metadata.dart';
 import 'package:zero_ping/models/peer_device.dart';
 import 'package:zero_ping/models/transfer_task.dart';
 import 'package:zero_ping/services/discovery_service.dart';
+import 'package:zero_ping/services/encryption_service.dart';
 import 'package:zero_ping/services/storage_service.dart';
 import 'package:zero_ping/widgets/app_avatar.dart';
 
@@ -91,5 +92,18 @@ void main() {
     expect(discovery.peers.length, 1);
     expect(discovery.peers.first.ip, '192.168.1.55');
     expect(discovery.peers.first.name, 'MacBook Pro');
+  });
+
+  test('EncryptionService safe re-initialization and round-trip test', () {
+    // Calling init multiple times must not throw LateInitializationError
+    EncryptionService.init(secretPassphrase: 'RoomPass1');
+    EncryptionService.init(secretPassphrase: 'RoomPass2');
+
+    final original = 'ZeroPing Secret Ghost Message 🚀';
+    final cipher = EncryptionService.encryptText(original);
+    expect(cipher, isNot(equals(original)));
+
+    final decrypted = EncryptionService.decryptText(cipher);
+    expect(decrypted, equals(original));
   });
 }
