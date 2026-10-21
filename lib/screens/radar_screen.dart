@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/peer_device.dart';
 import '../services/browser_drop_service.dart';
 import '../services/broadcast_engine.dart';
@@ -66,6 +68,143 @@ class _RadarScreenState extends State<RadarScreen> {
     );
   }
 
+  String? _extractValidIp(String raw) {
+    if (raw.isEmpty) return null;
+    final match = RegExp(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b').firstMatch(raw);
+    if (match != null) {
+      final candidate = match.group(0)!;
+      final parts = candidate.split('.').map(int.tryParse).toList();
+      if (parts.length == 4 && parts.every((p) => p != null && p >= 0 && p <= 255)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  void _showGlobalInviteModal() {
+    final myIp = widget.discoveryService.myIp;
+    final profile = StorageService.getUserProfile();
+    final name = profile?.name ?? widget.discoveryService.myDeviceName;
+    final inviteLink = 'http://$myIp:8080/join?node=${Uri.encodeComponent(name)}';
+    final shareMessage = '⚡ Join my ZeroPing Direct P2P Room!\n\nLink: $inviteLink\nDirect Socket IP: $myIp\n\n100% offline, 0% cloud uploads. Download app: https://github.com/PiyushASSUDANI123/zeroping-app';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => GlassContainer(
+        borderRadius: 24,
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(22),
+        color: AppTheme.surfaceCard.withValues(alpha: 0.98),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryCyan.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.share_rounded, color: AppTheme.primaryCyan, size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Invite Peers to ZeroPing Room',
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Share via link to connect phones or laptops instantly',
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textMuted),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.glassBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.link_rounded, color: AppTheme.primaryCyan, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      inviteLink,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, color: AppTheme.primaryCyan, size: 18),
+                    tooltip: 'Copy Link',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: inviteLink));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: AppTheme.primaryCyan,
+                          content: Text('Room invite link copied to clipboard!'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.share_rounded, size: 18),
+              label: const Text('Share Room Link to Friends / WhatsApp'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryCyan,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                SharePlus.instance.share(
+                  ShareParams(
+                    text: shareMessage,
+                    subject: 'Connect to ZeroPing Room',
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showDirectConnectDialog() {
     final ipController = TextEditingController();
     showDialog(
@@ -81,7 +220,7 @@ class _RadarScreenState extends State<RadarScreen> {
             Icon(Icons.add_link_rounded, color: AppTheme.primaryCyan),
             SizedBox(width: 8),
             Text(
-              'Direct Connect via IP',
+              'Connect via IP or Link',
               style: TextStyle(
                 color: AppTheme.textPrimary,
                 fontSize: 16,
@@ -95,7 +234,7 @@ class _RadarScreenState extends State<RadarScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Connect directly to another device running ZeroPing on your local Wi-Fi or hotspot. Zero fake data, pure direct socket.',
+              'Enter peer IP address or paste an invite link (e.g. 192.168.1.15 or http://192.168.1.15:8080). Zero fake data.',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 14),
@@ -108,7 +247,7 @@ class _RadarScreenState extends State<RadarScreen> {
                 fontSize: 14,
               ),
               decoration: InputDecoration(
-                hintText: 'e.g. 192.168.1.15',
+                hintText: 'e.g. 192.168.1.15 or paste link',
                 hintStyle: const TextStyle(color: AppTheme.textMuted),
                 filled: true,
                 fillColor: AppTheme.background,
@@ -136,14 +275,22 @@ class _RadarScreenState extends State<RadarScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              final ip = ipController.text.trim();
-              if (ip.isNotEmpty) {
+              final raw = ipController.text.trim();
+              final ip = _extractValidIp(raw);
+              if (ip != null) {
                 widget.discoveryService.addDirectPeer(ip);
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: AppTheme.primaryCyan,
                     content: Text('Connected to node $ip! Beacon announced.'),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: AppTheme.accentRose,
+                    content: Text('Invalid IP format. Enter a valid IPv4 address (e.g. 192.168.1.15).'),
                   ),
                 );
               }
@@ -695,12 +842,17 @@ class _RadarScreenState extends State<RadarScreen> {
                         ],
                       ),
 
-                      // Tool shortcuts: Direct Connect, Universal Clipboard, Browser Drop
+                      // Tool shortcuts: Direct Connect, Invite Link, Universal Clipboard, Browser Drop
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.add_link_rounded, color: AppTheme.primaryCyan, size: 22),
-                            tooltip: 'Direct Connect via IP',
+                            icon: const Icon(Icons.share_rounded, color: AppTheme.primaryCyan, size: 20),
+                            tooltip: 'Invite via Link',
+                            onPressed: _showGlobalInviteModal,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_link_rounded, color: AppTheme.textSecondary, size: 21),
+                            tooltip: 'Connect via IP or Link',
                             onPressed: _showDirectConnectDialog,
                           ),
                           IconButton(

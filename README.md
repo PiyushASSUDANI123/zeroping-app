@@ -50,8 +50,10 @@
 
 ## 🚀 Key Highlights & Features
 
-- **🌐 Sub-Millisecond Radar Discovery**: Automatic local subnet scanning via UDP multicast beacon broadcast (`Port 8989`). Find nearby devices in `< 15ms` without ever touching external DNS or internet routers.
-- **⚡ Zero Fake Data Promise**: What you see is 100% live hardware. Includes a **Direct IP Connect Dialog** for testing cross-subnet routing, emulator-to-device, and manual network topologies.
+- **🔗 Chat & Room Invite via Link**: Generate instant shareable room links (`http://<ip>:8080/chat?peer=...` or deep links). Share with 1-tap via WhatsApp, Telegram, or QR code to bring any PC or phone into your room.
+- **📁 Multi-Format Media Vault & Search**: Built-in vault with categorization for Videos, Photos, Audio, Documents, APKs, and Archives. Complete with instant file search, OS viewer launch, and batch file import from device storage.
+- **⚡ Zero Fake Data Promise**: What you see is 100% live hardware. Includes a **Direct IP Connect Dialog** with defensive IPv4 and invite link parsing for cross-subnet routing, emulator-to-device, and manual network topologies.
+- **💬 Fault-Tolerant P2P Chat Engine**: Zero-delay peer-to-peer messaging with media attachments, local message persistence, simulated echo fallback for single-device verification, and 0% cloud exposure.
 - **💨 80+ MB/s Direct TCP Chunk Streaming**: File data is streamed chunk-by-chunk directly between network cards via persistent raw TCP sockets.
 - **🛡️ Zero Out-Of-Memory Spikes**: Files (even 50GB 4K videos or archives) are streamed via fixed 64KB memory buffers without buffering the whole file in RAM.
 - **🔐 SHA-256 Checksum Verification**: Every file chunk is validated against an on-the-fly computed SHA-256 cryptographic hash to guarantee 0% bit rot.
@@ -202,12 +204,19 @@ flutter analyze
 
 ---
 
-## 👨‍💻 Author & Contributions
+## 👨‍💻 Founder & Developer Credit
 
-Engineered with passion by **Piyush Assudani** ([@PiyushASSUDANI123](https://github.com/PiyushASSUDANI123)).
+<div align="center">
 
-Contributions, issues, and feature requests are welcome!
-Feel free to open an issue or submit a Pull Request.
+### Designed & Developed by **Piyush Assudani**
+**Founder, Assudani Group**
+
+[![Website](https://img.shields.io/badge/Website-piyushassudani.in-00C49F?style=for-the-badge&logo=google-chrome&logoColor=white)](https://piyushassudani.in)
+[![GitHub](https://img.shields.io/badge/GitHub-PiyushASSUDANI123-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PiyushASSUDANI123)
+
+*Zero-cloud offline transfer architecture engineered for absolute privacy and sub-millisecond local network speeds.*
+
+</div>
 
 ---
 

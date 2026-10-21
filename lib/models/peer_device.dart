@@ -1,4 +1,3 @@
-
 enum DeviceType { android, windows, macos, linux, ios, unknown }
 
 class PeerDevice {
@@ -6,6 +5,7 @@ class PeerDevice {
   final String name;
   final String ip;
   final int port;
+  final String avatar;
   final DeviceType deviceType;
   DateTime lastSeen;
   bool isConnected;
@@ -16,6 +16,7 @@ class PeerDevice {
     required this.name,
     required this.ip,
     required this.port,
+    this.avatar = 'avatar_1',
     this.deviceType = DeviceType.unknown,
     DateTime? lastSeen,
     this.isConnected = false,
@@ -27,6 +28,7 @@ class PeerDevice {
         'name': name,
         'ip': ip,
         'port': port,
+        'avatar': avatar,
         'deviceType': deviceType.name,
         'lastSeen': lastSeen.toIso8601String(),
       };
@@ -37,6 +39,7 @@ class PeerDevice {
       name: json['name'] as String? ?? 'Nearby Peer',
       ip: json['ip'] as String? ?? '',
       port: (json['port'] as num?)?.toInt() ?? 8990,
+      avatar: json['avatar'] as String? ?? 'avatar_1',
       deviceType: DeviceType.values.firstWhere(
         (e) => e.name == (json['deviceType'] as String? ?? ''),
         orElse: () => DeviceType.unknown,
@@ -52,6 +55,7 @@ class PeerDevice {
     String? name,
     String? ip,
     int? port,
+    String? avatar,
     DeviceType? deviceType,
     DateTime? lastSeen,
     bool? isConnected,
@@ -62,6 +66,7 @@ class PeerDevice {
       name: name ?? this.name,
       ip: ip ?? this.ip,
       port: port ?? this.port,
+      avatar: avatar ?? this.avatar,
       deviceType: deviceType ?? this.deviceType,
       lastSeen: lastSeen ?? this.lastSeen,
       isConnected: isConnected ?? this.isConnected,
