@@ -182,4 +182,17 @@ class StorageService {
     }
     return messages;
   }
+
+  /// Generic key-value helpers for local persistent vault
+  static Future<void> saveString(String key, String value) async {
+    await _prefs?.setString(key, value);
+  }
+
+  static String? getString(String key) {
+    return _prefs?.getString(key);
+  }
+
+  static Future<void> remove(String key) async {
+    await _prefs?.remove(key);
+  }
 }

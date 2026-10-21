@@ -50,17 +50,20 @@
 
 ## 🚀 Key Highlights & Features
 
+- **📻 Walkie-Talkie Push-To-Talk (Voice Notes over RFCOMM)**: Hold the military mic button to record voice notes. Audio is encrypted with AES-256 and streamed in real-time over the Bluetooth RFCOMM pipe with in-app waveform playback.
+- **🔄 Invisible Auto-Reconnect (The Stability Moat)**: If Bluetooth drops due to range, ZeroPing's background ping daemon silently attempts reconnection to the MAC address and restores the room with haptic feedback as soon as you step back in range.
+- **✓✓ Packet Acknowledgment & Realtime Typing**: WhatsApp-grade UX with dynamic `"Typing..."` indicators and read receipts that turn from single tick `✓` to double grey `✓✓`, and flip to bright blue `✓✓` upon receipt.
+- **🔒 Military-Grade Local Encryption (AES-256)**: End-to-end symmetric encryption derived from the private room UUID. Bluetooth sniffers only see encrypted ciphertext. Includes a real-time Wire Packet Cipher Inspector.
+- **🔥 The Persistent Dark Vault & Burn Chat**: Encrypted chat history saved locally in the device vault. Includes a one-tap **"Burn Chat (Military Self-Destruct)"** option that permanently purges messages and voice notes.
 - **🔗 Chat & Room Invite via Link**: Generate instant shareable room links (`http://<ip>:8080/chat?peer=...` or deep links). Share with 1-tap via WhatsApp, Telegram, or QR code to bring any PC or phone into your room.
 - **📁 Multi-Format Media Vault & Search**: Built-in vault with categorization for Videos, Photos, Audio, Documents, APKs, and Archives. Complete with instant file search, OS viewer launch, and batch file import from device storage.
 - **⚡ Zero Fake Data Promise**: What you see is 100% live hardware. Includes a **Direct IP Connect Dialog** with defensive IPv4 and invite link parsing for cross-subnet routing, emulator-to-device, and manual network topologies.
-- **💬 Fault-Tolerant P2P Chat Engine**: Zero-delay peer-to-peer messaging with media attachments, local message persistence, simulated echo fallback for single-device verification, and 0% cloud exposure.
 - **💨 80+ MB/s Direct TCP Chunk Streaming**: File data is streamed chunk-by-chunk directly between network cards via persistent raw TCP sockets.
 - **🛡️ Zero Out-Of-Memory Spikes**: Files (even 50GB 4K videos or archives) are streamed via fixed 64KB memory buffers without buffering the whole file in RAM.
 - **🔐 SHA-256 Checksum Verification**: Every file chunk is validated against an on-the-fly computed SHA-256 cryptographic hash to guarantee 0% bit rot.
 - **🎭 6 Studio 3D Personas**: High-definition, friendly 3D avatars stored locally. Easily personalize your device profile with zero latency.
 - **📋 Universal Real-Time Clipboard**: Sync clipboard text, tokens, links, and snippets instantaneously across connected devices.
 - **💻 Browser Drop (Zero Install PC/Mac Sync)**: Built-in local HTTP server (`Port 8080`) with QR code generation. Any laptop, iPhone, or Linux machine on the same Wi-Fi can receive files using standard Chrome/Safari without installing an app.
-- **🎙️ Mesh Walkie-Talkie & Encrypted Chat**: Sub-millisecond peer-to-peer Push-to-Talk audio streaming and encrypted local text communication.
 
 ---
 
