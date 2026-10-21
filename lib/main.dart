@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'services/bluetooth_p2p_service.dart';
 import 'services/browser_drop_service.dart';
 import 'services/broadcast_engine.dart';
 import 'services/clipboard_service.dart';
@@ -52,6 +53,9 @@ void main() async {
   final broadcastEngine = BroadcastEngine();
   final iotNodeService = IoTNodeService();
 
+  final bluetoothService = BluetoothP2PService();
+  await bluetoothService.init();
+
   runApp(
     ZeroPingApp(
       discoveryService: discoveryService,
@@ -60,6 +64,7 @@ void main() async {
       clipboardService: clipboardService,
       broadcastEngine: broadcastEngine,
       iotNodeService: iotNodeService,
+      bluetoothService: bluetoothService,
     ),
   );
 }
@@ -71,6 +76,7 @@ class ZeroPingApp extends StatelessWidget {
   final ClipboardService clipboardService;
   final BroadcastEngine broadcastEngine;
   final IoTNodeService iotNodeService;
+  final BluetoothP2PService bluetoothService;
 
   const ZeroPingApp({
     super.key,
@@ -80,6 +86,7 @@ class ZeroPingApp extends StatelessWidget {
     required this.clipboardService,
     required this.broadcastEngine,
     required this.iotNodeService,
+    required this.bluetoothService,
   });
 
   @override
@@ -95,6 +102,7 @@ class ZeroPingApp extends StatelessWidget {
         clipboardService: clipboardService,
         broadcastEngine: broadcastEngine,
         iotNodeService: iotNodeService,
+        bluetoothService: bluetoothService,
       ),
     );
   }

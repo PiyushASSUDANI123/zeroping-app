@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../models/file_metadata.dart';
-import '../services/browser_drop_service.dart';
+import '../services/bluetooth_p2p_service.dart';
 import '../services/broadcast_engine.dart';
+import '../services/browser_drop_service.dart';
 import '../services/clipboard_service.dart';
 import '../services/discovery_service.dart';
 import '../services/iot_node_service.dart';
 import '../services/p2p_socket_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
+import 'bluetooth_home_screen.dart';
 import 'files_screen.dart';
 import 'radar_screen.dart';
 import 'settings_screen.dart';
@@ -20,6 +22,7 @@ class HomeScreen extends StatefulWidget {
   final ClipboardService clipboardService;
   final BroadcastEngine broadcastEngine;
   final IoTNodeService iotNodeService;
+  final BluetoothP2PService bluetoothService;
 
   const HomeScreen({
     super.key,
@@ -29,6 +32,7 @@ class HomeScreen extends StatefulWidget {
     required this.clipboardService,
     required this.broadcastEngine,
     required this.iotNodeService,
+    required this.bluetoothService,
   });
 
   @override
@@ -156,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
         socketService: widget.socketService,
         broadcastEngine: widget.broadcastEngine,
       ),
+      BluetoothHomeScreen(bluetoothService: widget.bluetoothService),
       FilesScreen(
         discoveryService: widget.discoveryService,
         socketService: widget.socketService,
@@ -188,6 +193,10 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.swap_horizontal_circle_rounded),
               label: 'Transfers',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bluetooth_rounded),
+              label: 'Bluetooth',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.folder_special_rounded),
