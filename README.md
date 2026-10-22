@@ -209,6 +209,8 @@ flutter analyze
 | **Account / Login Required** | ❌ **No** | ✅ Yes |
 | **Telemetry / Tracking** | ❌ **0% Telemetry** | ⚠️ Targeted ads / tracking |
 
+👉 **[Read Official Google Play Store Privacy Policy](https://piyushassudani123.github.io/zeroping-app/privacy.html)** ([Markdown Version](PRIVACY_POLICY.md))
+
 ---
 
 ## 👨‍💻 Founder & Developer Credit

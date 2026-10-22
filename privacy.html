@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - ZeroPing | Assudani Group</title>
+  <meta name="description" content="Official Privacy Policy for ZeroPing (com.piyush.zeroping) - Zero-data collection, 100% offline peer-to-peer communication application developed by Piyush Assudani, Assudani Group.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.25);
+      --purple: #8b5cf6;
+      --green: #10b981;
+      --code-bg: rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.12), transparent 40%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--purple));
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .app-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .app-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .app-meta strong {
+      color: var(--text);
+    }
+
+    .content {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 36px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+    }
+
+    p {
+      color: #d1d5db;
+      margin-bottom: 16px;
+      font-size: 0.98rem;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin-bottom: 20px;
+    }
+
+    li {
+      position: relative;
+      padding-left: 26px;
+      margin-bottom: 10px;
+      color: #d1d5db;
+      font-size: 0.96rem;
+    }
+
+    li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .callout {
+      background: rgba(0, 240, 255, 0.05);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin: 22px 0;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .permission-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.92rem;
+    }
+
+    .permission-table th,
+    .permission-table td {
+      border: 1px solid var(--card-border);
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    .permission-table th {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    .permission-table td code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #e5e7eb;
+      background: var(--code-bg);
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 20px 12px;
+      }
+      .header, .content {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .permission-table th, .permission-table td {
+        padding: 10px 8px;
+        font-size: 0.84rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <header class="header">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Zero Data Collection Verified
+      </div>
+      <h1>Privacy Policy</h1>
+      <p style="color: var(--text-muted); margin-bottom: 0;">Official privacy and data handling disclosures for Google Play Store compliance.</p>
+      
+      <div class="app-meta">
+        <span><strong>App Name:</strong> ZeroPing</span>
+        <span><strong>Package Name:</strong> <code>com.piyush.zeroping</code></span>
+        <span><strong>Developer:</strong> Piyush Assudani (Founder, Assudani Group)</span>
+        <span><strong>Effective Date:</strong> October 2026</span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <h2>1. Overview & Core Philosophy</h2>
+      <p>
+        <strong>ZeroPing</strong> is an offline, peer-to-peer (P2P) wireless file sharing and walkie-talkie communication application engineered for privacy, speed, and resilience. Our fundamental core philosophy is simple:
+      </p>
+      <div class="callout">
+        <div class="callout-title">Zero-Server, Zero-Cloud Architecture</div>
+        <p style="margin: 0; color: #e5e7eb;">
+          ZeroPing operates <strong>100% offline</strong> using direct peer-to-peer Wi-Fi Hotspot, Wi-Fi Direct, and Bluetooth RFCOMM sockets. We do not operate any user-tracking servers, cloud databases, external analytics SDKs, advertising networks, or third-party telemetry. Your data never touches the internet.
+        </p>
+      </div>
+
+      <h2>2. What Information We Collect</h2>
+      <p><strong>We collect exactly ZERO personal data:</strong></p>
+      <ul>
+        <li><strong>No Account Required:</strong> You do not need to register with an email address, phone number, password, or social login.</li>
+        <li><strong>No Telemetry or Tracking:</strong> We do not track device unique hardware identifiers (IMEI, MAC address, Android ID) or personal usage habits.</li>
+        <li><strong>No Cloud Storage:</strong> Messages, files, voice notes, and avatars are stored strictly inside your device's sandbox local storage.</li>
+        <li><strong>No Third-Party Analytics or Ads:</strong> There are no Google AdMob, Facebook Analytics, Firebase Tracking, or advertising trackers embedded in the application.</li>
+      </ul>
+
+      <h2>3. Device Permissions & How They Are Used</h2>
+      <p>
+        To discover nearby devices and transfer data offline without an internet connection, ZeroPing requests only the minimal necessary Android permissions:
+      </p>
+
+      <table class="permission-table">
+        <thead>
+          <tr>
+            <th>Permission</th>
+            <th>Purpose</th>
+            <th>Data Handling</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>BLUETOOTH_SCAN</code><br><code>BLUETOOTH_CONNECT</code><br><code>BLUETOOTH_ADVERTISE</code></td>
+            <td>Required on Android 12+ to discover nearby peer devices, establish local RFCOMM chat sockets, and stream encrypted voice notes.</td>
+            <td>Used strictly with <code>neverForLocation</code> flag. No location is gathered, stored, or transmitted.</td>
+          </tr>
+          <tr>
+            <td><code>NEARBY_WIFI_DEVICES</code><br><code>ACCESS_FINE_LOCATION</code></td>
+            <td>Android operating system requirement to scan for nearby Wi-Fi Direct and local hotspot nodes.</td>
+            <td>Used solely by Android's internal Wi-Fi stack. ZeroPing never records, tracks, or shares your geographic GPS coordinates.</td>
+          </tr>
+          <tr>
+            <td><code>RECORD_AUDIO</code></td>
+            <td>Required solely for the user-initiated "Walkie-Talkie Push-to-Talk" feature.</td>
+            <td>Audio is captured only while holding the record button, encrypted locally with AES-256, transmitted directly to the connected peer, and never stored on any remote cloud.</td>
+          </tr>
+          <tr>
+            <td><code>READ_MEDIA_IMAGES</code><br><code>READ_MEDIA_VIDEO</code><br><code>READ_MEDIA_AUDIO</code></td>
+            <td>Allows users to selectively choose files, images, and memes to send over the local P2P network.</td>
+            <td>Only files explicitly selected by the user are read and streamed. We never scan or index your media library.</td>
+          </tr>
+          <tr>
+            <td><code>FOREGROUND_SERVICE</code></td>
+            <td>Keeps large local file transfers and walkie-talkie audio streaming active when the screen turns off or the app is minimized.</td>
+            <td>Displays an active notification to the user while background transfer is in progress.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4. Military-Grade Security & Encryption</h2>
+      <p>
+        All communications transmitted over ZeroPing (text chat, ghost messages, audio voice notes, and memes) are secured using <strong>AES-256 CBC symmetric encryption</strong>. Encryption keys and initialization vectors (IVs) are deterministically derived locally on both devices from the shared room identifier. No unencrypted plain text is broadcast over the air.
+      </p>
+
+      <h2>5. Ghost Messages & Data Destruction</h2>
+      <p>
+        ZeroPing includes a "Ghost Message" feature designed for self-destructing text:
+      </p>
+      <ul>
+        <li>Users configure a countdown timer (5 seconds, 10 seconds, or 30 seconds).</li>
+        <li>The recipient must tap-and-hold to view the message content.</li>
+        <li>Upon timer expiry, the message is permanently wiped from RAM and deleted from local storage on both devices.</li>
+      </ul>
+
+      <h2>6. Children's Privacy</h2>
+      <p>
+        ZeroPing complies with the Children’s Online Privacy Protection Act (COPPA) and General Data Protection Regulation (GDPR). Since the app collects no personal information whatsoever, it does not knowingly collect, store, or solicit information from children under the age of 13.
+      </p>
+
+      <h2>7. Changes to This Privacy Policy</h2>
+      <p>
+        Any future modifications to this policy will be posted on this page and reflected in subsequent updates on the Google Play Store with an updated "Effective Date".
+      </p>
+
+      <h2>8. Contact & Developer Information</h2>
+      <p>
+        If you have any questions, suggestions, or concerns regarding this Privacy Policy or ZeroPing, please contact the developer directly:
+      </p>
+      <ul>
+        <li><strong>Developer:</strong> Piyush Assudani</li>
+        <li><strong>Organization:</strong> Assudani Group</li>
+        <li><strong>Official Website:</strong> <a href="https://piyushassudani.in" target="_blank" rel="noopener" style="color: var(--accent);">https://piyushassudani.in</a></li>
+        <li><strong>Open Source Repository:</strong> <a href="https://github.com/PiyushASSUDANI123/zeroping-app" target="_blank" rel="noopener" style="color: var(--accent);">https://github.com/PiyushASSUDANI123/zeroping-app</a></li>
+        <li><strong>Contact Email:</strong> <a href="mailto:piyushassudani@gmail.com" style="color: var(--accent);">piyushassudani@gmail.com</a></li>
+      </ul>
+
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 ZeroPing • Designed & Developed by <a href="https://piyushassudani.in" target="_blank" rel="noopener">Piyush Assudani</a> (Assudani Group). All rights reserved.</p>
+    </footer>
+
+  </div>
+</body>
+</html>
