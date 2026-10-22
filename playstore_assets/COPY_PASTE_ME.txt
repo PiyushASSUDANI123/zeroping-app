@@ -1,0 +1,76 @@
+================================================================================
+GOOGLE PLAY CONSOLE - DEFAULT STORE LISTING DETAILS
+================================================================================
+
+1. APP NAME (Max 30 characters - Currently: 27 chars)
+--------------------------------------------------------------------------------
+ZeroPing: P2P Offline Chat
+
+
+2. SHORT DESCRIPTION (Max 80 characters - Currently: 76 chars)
+--------------------------------------------------------------------------------
+Fast, secure offline P2P chat, Walkie-Talkie voice notes, and file sharing.
+
+
+3. FULL DESCRIPTION (Max 4000 characters)
+--------------------------------------------------------------------------------
+ZeroPing is the ultimate zero-cloud, 100% offline peer-to-peer (P2P) communication and high-speed file-sharing app engineered for privacy, speed, and freedom.
+
+No internet? No cellular tower? No Wi-Fi router? No problem.
+ZeroPing connects you directly to nearby devices using direct Wi-Fi Hotspot, Wi-Fi Direct, and Bluetooth RFCOMM technology with zero latency and zero data consumption.
+
+━━━━━━━━━━━━━━━━━━━━━
+🔥 TOP FEATURES YOU'LL LOVE
+━━━━━━━━━━━━━━━━━━━━━
+
+🎙️ WALKIE-TALKIE MODE (Voice Notes over Bluetooth)
+• Push-to-talk live voice notes streamed over RFCOMM.
+• Military-grade voice messaging without any internet or cell reception.
+• Crystal-clear offline audio playback.
+
+🥷 STEALTH MODE (Panic Disguise)
+• Quick double-tap on the app bar instantly transforms your chat into a fully working fake Calculator!
+• Keeps background Bluetooth socket & audio streams active while masking your screen.
+• Long-press '=' or double-tap top bar to safely return to chat.
+
+👻 GHOST MESSAGES (Self-Destructing Text)
+• Send secret, encrypted messages with 5s, 10s, or 30s timers.
+• Receiver must tap-and-hold to reveal the secret.
+• Automatically purged from memory and permanently wiped from local storage upon expiration.
+
+🎮 IN-CHAT MINI GAMES (Zero-Latency)
+• Play embedded interactive Tic-Tac-Toe right inside your chat bubble!
+• Sub-millisecond state updates streamed directly between devices.
+• 100% offline gaming with zero lag.
+
+⚡ ULTRA-FAST FILE & MEME SHARING (100 MB/s)
+• Share 4K movies, heavy apps, ZIP files, and photos at blistering speeds.
+• Smart 10KB sequential chunking protocol ensures large meme/image transfers never crash low-bandwidth connections.
+• Visual real-time progress bars with auto-assembly.
+
+🔒 MILITARY-GRADE AES-256 ENCRYPTION
+• End-to-end encrypted chats, voice notes, and file transfers using AES-256 CBC.
+• Symmetric keys are derived locally on-device. No plain text ever leaks over the air.
+
+🛡️ ZERO CLOUD, ZERO TRACKING, 100% PRIVATE
+• No phone number, no email, and no sign-up required.
+• No cloud servers, no databases, and zero tracking SDKs.
+• What happens on your device stays on your device.
+
+━━━━━━━━━━━━━━━━━━━━━
+📱 PERFECT FOR:
+━━━━━━━━━━━━━━━━━━━━━
+• Classrooms, college campuses, and exam halls
+• Flights, subways, basements, and remote rural areas
+• Music festivals, trekking, camping, and natural disaster zones
+• Privacy-conscious users who want total control over their data
+
+━━━━━━━━━━━━━━━━━━━━━
+👨‍💻 DEVELOPER CREDIT
+━━━━━━━━━━━━━━━━━━━━━
+Designed & Developed by Piyush Assudani, Founder, Assudani Group.
+Official Website: https://piyushassudani.in
+Open Source: https://github.com/PiyushASSUDANI123/zeroping-app
+
+Download ZeroPing now and experience zero-latency, private offline communication!
+================================================================================
