@@ -1,4 +1,4 @@
-package com.zeroping.zero_ping
+package com.piyush.zeroping
 
 import io.flutter.embedding.android.FlutterActivity
 
